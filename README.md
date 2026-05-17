@@ -1,2 +1,2 @@
 # PassearContigo
-Uma aplicação composta por uma versão web e outra versão mobile que permite a um turista planear as suas viagens, definir percursos e locais a visitar, transportes de que necessita, horários, preços, etc. Permite-lhe registar todos os pontos de interesse dos locais que visitar, associando a cada ponto, fotos, ideias, curiosidades, custos, e etc.
+Uma aplicação composta por uma versão web e outra versão mobile que permite a um turista planear as suas viagens, definir percursos e locais a visitar, transportes de que necessita, horários, preços, etc. Permite-lhe registar todos os pontos de interesse dos locais que visitar, associando a cada ponto, fotos, ideias, curiosidades, custos, e etc....
