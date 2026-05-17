@@ -1,0 +1,7 @@
+{
+  "name": "temp_app",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
