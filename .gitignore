@@ -145,3 +145,4 @@ vite.config.ts.timestamp-*
 .angular/
 dist/
 referencia/
+www/
