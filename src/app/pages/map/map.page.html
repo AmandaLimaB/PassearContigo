@@ -1,13 +1,288 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>map</ion-title>
-  </ion-toolbar>
-</ion-header>
-
 <ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">map</ion-title>
-    </ion-toolbar>
-  </ion-header>
+  <div class="relative-container">
+    <!-- GPS Status Indicator -->
+    <div class="gps-indicator" *ngIf="gpsActive">
+      <div class="pulse-dot"></div>
+      <span class="indicator-text">GPS Ativo</span>
+    </div>
+
+    <!-- Share Location Indicator -->
+    <div class="share-indicator" *ngIf="sharingLocation">
+      <ion-icon name="radio-outline" class="rotate-icon"></ion-icon>
+      <span class="indicator-text">Partilha Ativa</span>
+    </div>
+
+    <!-- Interactive Mock Map -->
+    <div class="mock-map">
+      <!-- Current Location Pin (Bouncing) -->
+      <div class="current-pin-wrapper">
+        <div class="bounce-wrapper">
+          <ion-icon name="location" class="map-pin-icon current-pin"></ion-icon>
+          <div class="pin-shadow"></div>
+        </div>
+        <div class="pin-label">Tu estás aqui</div>
+      </div>
+
+      <!-- Nearby Locations Markers -->
+      <div 
+        *ngFor="let location of visitedLocations; let idx = index" 
+        class="nearby-marker"
+        [style.top]="30 + idx * 18 + '%'"
+        [style.left]="20 + idx * 24 + '%'"
+      >
+        <div class="group-pin">
+          <ion-icon 
+            name="location" 
+            [class.visited]="location.hasRecord"
+            [class.unvisited]="!location.hasRecord"
+            class="map-pin-icon marker-pin"
+          ></ion-icon>
+          
+          <!-- Visited checkmark badge -->
+          <div *ngIf="location.hasRecord" class="check-badge">
+            <ion-icon name="checkmark"></ion-icon>
+          </div>
+
+          <div class="marker-label">{{ location.name }}</div>
+        </div>
+      </div>
+
+      <!-- Map Grid Lines overlay -->
+      <div class="map-grid"></div>
+    </div>
+
+    <!-- FAB for checking in -->
+    <ion-fab vertical="bottom" horizontal="end" slot="fixed" class="custom-fab">
+      <ion-fab-button (click)="handleFABClick()" color="tertiary">
+        <ion-icon name="add-circle-outline"></ion-icon>
+      </ion-fab-button>
+    </ion-fab>
+  </div>
+
+  <!-- FLOW MODALS (REPLACING REACT BOTTOM SHEETS / MODALS) -->
+
+  <!-- 1. Location Confirmation Modal -->
+  <ion-modal [isOpen]="currentStep === 'confirm'" (didDismiss)="cancelFlow()" [initialBreakpoint]="0.35" [breakpoints]="[0, 0.35]">
+    <ng-template>
+      <ion-content class="ion-padding custom-sheet">
+        <div class="sheet-header">
+          <h2 class="sheet-title">Detetámos a tua localização</h2>
+          <ion-button fill="clear" (click)="cancelFlow()" class="close-btn">
+            <ion-icon slot="icon-only" name="close"></ion-icon>
+          </ion-button>
+        </div>
+
+        <p class="sheet-body">
+          <span class="location-name">{{ currentLocationName }}</span>
+          <br />
+          <span class="helper-text">Confirmas que estás aqui?</span>
+        </p>
+
+        <div class="actions-row">
+          <ion-button expand="block" fill="solid" color="secondary" (click)="cancelFlow()" class="action-btn-half">
+            Não
+          </ion-button>
+          <ion-button expand="block" fill="solid" color="tertiary" (click)="confirmLocation()" class="action-btn-half">
+            Sim
+          </ion-button>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- 2. Feedback Modal -->
+  <ion-modal [isOpen]="currentStep === 'feedback'" (didDismiss)="cancelFlow()" [initialBreakpoint]="0.6" [breakpoints]="[0, 0.6, 0.9]">
+    <ng-template>
+      <ion-content class="ion-padding custom-sheet">
+        <div class="sheet-header">
+          <h2 class="sheet-title">Avalia {{ currentLocationName }}</h2>
+          <ion-button fill="clear" (click)="cancelFlow()" class="close-btn">
+            <ion-icon slot="icon-only" name="close"></ion-icon>
+          </ion-button>
+        </div>
+
+        <div class="form-section">
+          <ion-label class="form-label">Como foi a experiência?</ion-label>
+          <div class="stars-container">
+            <button 
+              *ngFor="let star of [1, 2, 3, 4, 5]" 
+              (click)="rating = star"
+              class="star-btn"
+            >
+              <ion-icon 
+                [name]="star <= rating ? 'star' : 'star-outline'"
+                [class.active]="star <= rating"
+                class="star-icon"
+              ></ion-icon>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <ion-label class="form-label">Escreve um comentário curto...</ion-label>
+          <ion-textarea 
+            [(ngModel)]="comment"
+            placeholder="O que achaste deste local?"
+            rows="4"
+            class="custom-textarea"
+          ></ion-textarea>
+        </div>
+
+        <ion-button 
+          expand="block" 
+          color="tertiary" 
+          [disabled]="rating === 0" 
+          (click)="submitFeedback()"
+          class="submit-btn"
+        >
+          Publicar
+        </ion-button>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- 3. Add Record Bottom Sheet -->
+  <ion-modal [isOpen]="currentStep === 'addRecord'" (didDismiss)="cancelFlow()" [initialBreakpoint]="0.5" [breakpoints]="[0, 0.5, 0.8]">
+    <ng-template>
+      <ion-content class="ion-padding custom-sheet">
+        <div class="sheet-header">
+          <h2 class="sheet-title">Adicionar Registo</h2>
+          <ion-button fill="clear" (click)="finishRecord()" class="close-btn">
+            <ion-icon slot="icon-only" name="checkmark-circle"></ion-icon>
+          </ion-button>
+        </div>
+
+        <p class="sheet-subtitle">{{ currentLocationName }}</p>
+
+        <div class="record-options">
+          <button (click)="goToPhoto()" class="option-card">
+            <div class="icon-avatar">
+              <ion-icon name="camera" class="avatar-inner-icon"></ion-icon>
+            </div>
+            <div class="option-details">
+              <span class="option-title">Tirar Foto</span>
+              <span class="option-subtitle">Captura um momento especial</span>
+            </div>
+          </button>
+
+          <button (click)="goToCost()" class="option-card">
+            <div class="icon-avatar">
+              <ion-icon name="wallet" class="avatar-inner-icon"></ion-icon>
+            </div>
+            <div class="option-details">
+              <span class="option-title">Registar Custo</span>
+              <span class="option-subtitle">Controla as tuas despesas</span>
+            </div>
+          </button>
+        </div>
+
+        <ion-button expand="block" color="tertiary" fill="outline" (click)="finishRecord()" class="finish-btn ion-margin-top">
+          Concluir Visita
+        </ion-button>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- 4. Photo Capture Modal -->
+  <ion-modal [isOpen]="currentStep === 'photo'" (didDismiss)="cancelFlow()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar color="primary">
+          <ion-buttons slot="start">
+            <ion-button (click)="currentStep = 'addRecord'">
+              <ion-icon slot="icon-only" name="arrow-back"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+          <ion-title>{{ currentLocationName }}</ion-title>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="black-bg flex-content">
+        <div class="photo-preview-container">
+          <img *ngIf="capturedPhoto" [src]="capturedPhoto" alt="Captura" class="preview-img" />
+          <div *ngIf="!capturedPhoto" class="no-photo-placeholder">
+            <ion-icon name="camera-outline" class="large-placeholder-icon"></ion-icon>
+            <p>Carrega no botão abaixo para tirar uma foto</p>
+          </div>
+        </div>
+
+        <div class="capture-controls">
+          <div *ngIf="capturedPhoto" class="btn-row">
+            <ion-button fill="outline" color="light" (click)="capturedPhoto = null" class="half-btn">
+              Tirar Outra
+            </ion-button>
+            <ion-button color="tertiary" (click)="savePhoto()" class="half-btn">
+              <ion-icon slot="start" name="checkmark"></ion-icon>
+              Usar Foto
+            </ion-button>
+          </div>
+
+          <div *ngIf="!capturedPhoto" class="trigger-btn-wrapper">
+            <label for="camera-input" class="shutter-button">
+              <div class="inner-shutter">
+                <ion-icon name="camera" class="shutter-icon"></ion-icon>
+              </div>
+            </label>
+            <input 
+              id="camera-input"
+              type="file" 
+              accept="image/*" 
+              capture="environment" 
+              (change)="handleFileSelect($event)" 
+              class="hidden" 
+            />
+          </div>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- 5. Cost Entry Modal -->
+  <ion-modal [isOpen]="currentStep === 'cost'" (didDismiss)="cancelFlow()" [initialBreakpoint]="0.5" [breakpoints]="[0, 0.5, 0.8]">
+    <ng-template>
+      <ion-content class="ion-padding custom-sheet">
+        <div class="sheet-header">
+          <h2 class="sheet-title">Registar Custo</h2>
+          <ion-button fill="clear" (click)="currentStep = 'addRecord'" class="close-btn">
+            <ion-icon slot="icon-only" name="close"></ion-icon>
+          </ion-button>
+        </div>
+
+        <p class="sheet-subtitle ion-margin-bottom">{{ currentLocationName }}</p>
+
+        <div class="form-section">
+          <ion-label class="form-label">Valor</ion-label>
+          <div class="input-currency-wrapper">
+            <ion-input 
+              type="text" 
+              inputmode="decimal" 
+              placeholder="0,00" 
+              [(ngModel)]="costAmount"
+              class="currency-input"
+            ></ion-input>
+            <span class="currency-symbol">€</span>
+          </div>
+        </div>
+
+        <div class="form-section ion-margin-bottom">
+          <ion-label class="form-label">Categoria</ion-label>
+          <div class="select-wrapper">
+            <select [(ngModel)]="costCategory" class="custom-select">
+              <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+            </select>
+          </div>
+        </div>
+
+        <ion-button 
+          expand="block" 
+          color="tertiary" 
+          [disabled]="!costAmount || parseFloat(costAmount.replace(',', '.')) <= 0"
+          (click)="saveCost()"
+          class="submit-btn"
+        >
+          Guardar
+        </ion-button>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
 </ion-content>
