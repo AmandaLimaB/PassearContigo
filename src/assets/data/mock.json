@@ -1,0 +1,66 @@
+{
+  "locations": [
+    { "id": "loc_1", "name": "Santuário de Santa Luzia", "lat": 41.6925, "lng": -8.8303, "hasRecord": false },
+    { "id": "loc_2", "name": "Ponte de Lima", "lat": 41.7676, "lng": -8.5834, "hasRecord": false },
+    { "id": "loc_3", "name": "Castelo de Viana", "lat": 41.6937, "lng": -8.8347, "hasRecord": false }
+  ],
+  "trips": [
+    {
+      "id": "1",
+      "name": "Norte de Portugal",
+      "startDate": "10 Mar 2026",
+      "endDate": "17 Mar 2026",
+      "locations": 12,
+      "totalSpent": 450,
+      "rating": 5
+    },
+    {
+      "id": "2",
+      "name": "Lisboa e Sintra",
+      "startDate": "1 Fev 2026",
+      "endDate": "5 Fev 2026",
+      "locations": 8,
+      "totalSpent": 320,
+      "rating": 4
+    },
+    {
+      "id": "3",
+      "name": "Algarve",
+      "startDate": "15 Jan 2026",
+      "endDate": "22 Jan 2026",
+      "locations": 15,
+      "totalSpent": 580,
+      "rating": 5
+    }
+  ],
+  "expenses": [
+    {
+      "id": "1",
+      "category": "Entradas/Cultura",
+      "amount": 15.0,
+      "location": "Santuário de Santa Luzia",
+      "date": "17 Mar 2026"
+    },
+    {
+      "id": "2",
+      "category": "Alimentação",
+      "amount": 45.5,
+      "location": "Ponte de Lima",
+      "date": "16 Mar 2026"
+    },
+    {
+      "id": "3",
+      "category": "Transporte",
+      "amount": 12.0,
+      "location": "Viana do Castelo",
+      "date": "15 Mar 2026"
+    },
+    {
+      "id": "4",
+      "category": "Alojamento",
+      "amount": 80.0,
+      "location": "Braga",
+      "date": "14 Mar 2026"
+    }
+  ]
+}
