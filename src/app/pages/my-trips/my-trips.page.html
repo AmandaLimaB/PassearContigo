@@ -1,13 +1,45 @@
 <ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>my-trips</ion-title>
+  <ion-toolbar color="primary">
+    <ion-title>Minhas Viagens</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">my-trips</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content class="ion-padding bg-light">
+  <h1 class="page-title">Minhas Viagens</h1>
+
+  <div class="trips-list">
+    <div *ngFor="let trip of trips" class="trip-card">
+      <h3 class="trip-name">{{ trip.name }}</h3>
+
+      <div class="trip-meta">
+        <div class="meta-item">
+          <ion-icon name="calendar-outline" class="meta-icon"></ion-icon>
+          <span class="meta-text">{{ trip.startDate }} - {{ trip.endDate }}</span>
+        </div>
+
+        <div class="meta-item">
+          <ion-icon name="location-outline" class="meta-icon"></ion-icon>
+          <span class="meta-text">{{ trip.locations }} locais visitados</span>
+        </div>
+
+        <div class="meta-item">
+          <ion-icon name="cash-outline" class="meta-icon"></ion-icon>
+          <span class="meta-text">{{ trip.totalSpent.toFixed(2) }}€ gastos</span>
+        </div>
+      </div>
+
+      <div class="rating-stars">
+        <ion-icon 
+          *ngFor="let star of getStars(trip.rating)" 
+          name="star" 
+          class="star-icon filled"
+        ></ion-icon>
+        <ion-icon 
+          *ngFor="let star of getEmptyStars(trip.rating)" 
+          name="star-outline" 
+          class="star-icon empty"
+        ></ion-icon>
+      </div>
+    </div>
+  </div>
 </ion-content>
