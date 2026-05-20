@@ -1,13 +1,61 @@
 <ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>finances</ion-title>
+  <ion-toolbar color="primary">
+    <ion-title>Finanças</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">finances</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content class="ion-padding bg-light">
+  <h1 class="page-title">Finanças</h1>
+
+  <!-- Total Summary Card -->
+  <div class="summary-card">
+    <div class="summary-header">
+      <ion-icon name="wallet-outline" class="summary-icon"></ion-icon>
+      <span class="summary-subtitle">Total Gasto</span>
+    </div>
+    <h2 class="summary-amount">{{ totalSpent.toFixed(2) }}€</h2>
+    <div class="summary-badge">
+      <ion-icon name="trending-up-outline" class="badge-icon"></ion-icon>
+      <span class="badge-text">Viagem atual</span>
+    </div>
+  </div>
+
+  <!-- Category Breakdown Card -->
+  <div class="breakdown-card">
+    <div class="card-header">
+      <ion-icon name="pie-chart-outline" class="header-icon"></ion-icon>
+      <h3 class="header-title">Por Categoria</h3>
+    </div>
+
+    <div class="breakdown-list">
+      <div *ngFor="let cat of categoryTotals" class="breakdown-item">
+        <div class="breakdown-labels">
+          <span class="category-name">{{ cat.category }}</span>
+          <span class="category-amount">{{ cat.amount.toFixed(2) }}€</span>
+        </div>
+        <div class="progress-track">
+          <div 
+            class="progress-fill" 
+            [ngClass]="cat.colorClass"
+            [style.width]="cat.percentage + '%'"
+          ></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Expenses Section -->
+  <h3 class="section-title">Despesas Recentes</h3>
+
+  <div class="expenses-list">
+    <div *ngFor="let expense of expenses" class="expense-row">
+      <div class="expense-info">
+        <p class="expense-location">{{ expense.location }}</p>
+        <p class="expense-meta">{{ expense.category }} • {{ expense.date }}</p>
+      </div>
+      <div class="expense-value">
+        {{ expense.amount.toFixed(2) }}€
+      </div>
+    </div>
+  </div>
 </ion-content>
