@@ -1,9 +1,4 @@
 {
-  "locations": [
-    { "id": "loc_1", "name": "Santuário de Santa Luzia", "lat": 41.6925, "lng": -8.8303, "hasRecord": false },
-    { "id": "loc_2", "name": "Ponte de Lima", "lat": 41.7676, "lng": -8.5834, "hasRecord": false },
-    { "id": "loc_3", "name": "Castelo de Viana", "lat": 41.6937, "lng": -8.8347, "hasRecord": false }
-  ],
   "trips": [
     {
       "id": "1",
@@ -11,16 +6,16 @@
       "startDate": "10 Mar 2026",
       "endDate": "17 Mar 2026",
       "locations": 12,
-      "totalSpent": 450,
+      "totalSpent": 450.0,
       "rating": 5
     },
     {
       "id": "2",
       "name": "Lisboa e Sintra",
-      "startDate": "1 Fev 2026",
-      "endDate": "5 Fev 2026",
+      "startDate": "01 Fev 2026",
+      "endDate": "05 Fev 2026",
       "locations": 8,
-      "totalSpent": 320,
+      "totalSpent": 320.0,
       "rating": 4
     },
     {
@@ -29,7 +24,7 @@
       "startDate": "15 Jan 2026",
       "endDate": "22 Jan 2026",
       "locations": 15,
-      "totalSpent": 580,
+      "totalSpent": 580.0,
       "rating": 5
     }
   ],
@@ -61,6 +56,23 @@
       "amount": 80.0,
       "location": "Braga",
       "date": "14 Mar 2026"
+    }
+  ],
+  "locations": [
+    {
+      "name": "Santuário de Santa Luzia",
+      "lat": 41.6925,
+      "lng": -8.8303
+    },
+    {
+      "name": "Ponte de Lima",
+      "lat": 41.7676,
+      "lng": -8.5834
+    },
+    {
+      "name": "Castelo de Viana",
+      "lat": 41.6937,
+      "lng": -8.8347
     }
   ]
 }
