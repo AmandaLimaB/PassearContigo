@@ -1,195 +1,174 @@
-<ion-header [translucent]="true">
+<ion-header [translucent]="true" class="ion-no-border">
   <ion-toolbar color="primary">
-    <ion-title>Perfil</ion-title>
+    <ion-title class="font-bold ion-text-center">Meu Perfil</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding bg-light">
-  <!-- Profile Header Card -->
-  <div class="profile-card">
-    <div class="profile-main">
-      <div class="profile-avatar">👤</div>
-      <div class="profile-meta">
-        <h2 class="profile-name">Maria Silva</h2>
-        <p class="profile-email">maria@exemplo.pt</p>
+<ion-content [fullscreen]="true" class="ion-padding bg-container">
+
+  <!-- Bloco de Identidade do Usuário (Visual Excellence) -->
+  <div class="profile-header-card ion-margin-bottom">
+    <div class="avatar-and-name">
+      <div class="avatar-circle">
+        <span>MS</span>
+      </div>
+      <div class="user-info">
+        <h2>Maria Silva</h2>
+        <p>maria.silva@exemplo.pt</p>
       </div>
     </div>
     
-    <div class="stats-row">
+    <!-- Grade de Estatísticas Rápidas (Requisito 11) -->
+    <div class="stats-row ion-margin-top">
       <div class="stat-col">
-        <span class="stat-value">24</span>
+        <span class="stat-number">24</span>
         <span class="stat-label">Viagens</span>
       </div>
-      <div class="stat-col border-left">
-        <span class="stat-value">156</span>
+      <div class="stat-col border-lr">
+        <span class="stat-number">156</span>
         <span class="stat-label">Locais</span>
       </div>
-      <div class="stat-col border-left">
-        <span class="stat-value">12</span>
+      <div class="stat-col">
+        <span class="stat-number">12</span>
         <span class="stat-label">Países</span>
       </div>
     </div>
   </div>
 
-  <!-- Live Share Section -->
-  <div class="share-card">
-    <div class="share-header">
-      <div class="share-icon-wrapper">
-        <ion-icon name="radio" class="share-icon"></ion-icon>
+  <!-- Painel de Compartilhamento em Tempo Real (Requisito 9, 11 e 12) -->
+  <ion-card class="share-panel-card ion-no-margin ion-margin-bottom">
+    <div class="card-custom-header ion-padding">
+      <div class="icon-wrapper">
+        <ion-icon name="radio" color="tertiary"></ion-icon>
       </div>
-      <div class="share-info">
-        <h3 class="share-title">Partilha em Direto</h3>
-        <p class="share-subtitle">
-          {{ sharingActive ? 'Ativo - ' + shareDetails?.contactsCount + ' pessoas' : 'Partilha a tua localização com a família' }}
-        </p>
+      <div class="header-text">
+        <h3>Partilha em Direto</h3>
+        <p *ngIf="!sharingActive">Partilhe sua localização ativa com amigos e familiares</p>
+        <p *ngIf="sharingActive" class="text-success">Ativa com {{ shareDetails.contactsCount }} pessoa(s)</p>
       </div>
     </div>
 
-    <!-- Active Sharing Panel -->
-    <div *ngIf="sharingActive && shareDetails" class="active-share-panel">
-      <div class="pulse-indicator">
-        <div class="indicator-dot"></div>
-        <span class="indicator-text">A partilhar localização</span>
+    <ion-card-content class="ion-no-padding-top">
+      <!-- Indicador Pulsante e Detalhes da Partilha -->
+      <div *ngIf="sharingActive" class="sharing-details-container ion-margin-bottom">
+        <div class="sharing-status">
+          <span class="pulsing-dot green"></span>
+          <span>A transmitir sinal GPS em direto</span>
+        </div>
+        <p class="sharing-meta">Duração selecionada: {{ shareDetails.duration }}</p>
       </div>
-      <p class="share-duration-text">Duração: {{ shareDetails.duration }}</p>
+
+      <!-- Botões de Ação -->
+      <ion-button *ngIf="!sharingActive" expand="block" color="tertiary" (click)="activateShareMode()" class="action-btn">
+        Ativar Partilha
+      </ion-button>
+      <ion-button *ngIf="sharingActive" expand="block" color="danger" (click)="stopSharing()" class="action-btn">
+        Parar Partilha
+      </ion-button>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Lista de Ajustes e Configurações (Requisito 11 e 12) -->
+  <div class="settings-title">
+    <h3>Definições Gerais</h3>
+  </div>
+
+  <div class="settings-list ion-margin-top">
+    <!-- Item de Bloqueio da Orientação - Capacitor ScreenOrientation Control (Requisito 12) -->
+    <div class="setting-row">
+      <div class="setting-left">
+        <div class="setting-icon bg-purple">
+          <ion-icon name="phone-portrait-outline"></ion-icon>
+        </div>
+        <div class="setting-text">
+          <p class="setting-title-txt">Travar Orientação (Retrato)</p>
+          <p class="setting-desc-txt">Impede exibição em landscape via acelerômetro</p>
+        </div>
+      </div>
+      <!-- Toggle que chama a trava de orientação usando Capacitor -->
+      <ion-toggle [(ngModel)]="rotationLocked" (ionChange)="toggleRotationLock()"></ion-toggle>
     </div>
 
-    <!-- Control Buttons -->
-    <ion-button 
-      *ngIf="!sharingActive" 
-      expand="block" 
-      color="tertiary" 
-      (click)="showShareSheet = true"
-      class="share-btn"
-    >
-      Ativar Partilha
-    </ion-button>
+    <!-- Ajustes Padrão Estéticos -->
+    <div class="setting-row ripple-active">
+      <div class="setting-left">
+        <div class="setting-icon bg-blue">
+          <ion-icon name="map-outline"></ion-icon>
+        </div>
+        <div class="setting-text">
+          <p class="setting-title-txt">Histórico de Lugares</p>
+          <p class="setting-desc-txt">Visualize todos os registros marcados no mapa</p>
+        </div>
+      </div>
+      <ion-icon name="chevron-forward-outline" class="chevron"></ion-icon>
+    </div>
 
-    <ion-button 
-      *ngIf="sharingActive" 
-      expand="block" 
-      color="danger" 
-      (click)="stopSharing()"
-      class="share-btn"
-    >
-      Parar Partilha
-    </ion-button>
+    <div class="setting-row ripple-active">
+      <div class="setting-left">
+        <div class="setting-icon bg-orange">
+          <ion-icon name="notifications-outline"></ion-icon>
+        </div>
+        <div class="setting-text">
+          <p class="setting-title-txt">Alertas e Notificações</p>
+          <p class="setting-desc-txt">Gerenciar lembretes de despesas e visitas</p>
+        </div>
+      </div>
+      <ion-icon name="chevron-forward-outline" class="chevron"></ion-icon>
+    </div>
+
+    <div class="setting-row ripple-active logout-btn">
+      <div class="setting-left">
+        <div class="setting-icon bg-red">
+          <ion-icon name="log-out-outline"></ion-icon>
+        </div>
+        <div class="setting-text">
+          <p class="setting-title-txt font-danger">Terminar Sessão</p>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- Settings List Section -->
-  <h3 class="settings-title">
-    <ion-icon name="settings-outline" class="title-icon"></ion-icon>
-    Definições
-  </h3>
+  <!-- BOTTOM SHEET: SELEÇÃO DE CONTATOS DE PARTILHA (Requisito 11 e 12) -->
+  <div class="bottom-sheet large" *ngIf="showShareSheet">
+    <div class="sheet-header">
+      <div class="sheet-drag-handle"></div>
+      <h3>Selecionar Contatos</h3>
+      <p class="subtitle">Escolha quem pode ver sua posição GPS</p>
+    </div>
+    
+    <div class="sheet-body ion-padding">
+      <!-- Listagem de Contatos Simples (Requisito 11) -->
+      <div class="contacts-grid ion-margin-bottom">
+        <div *ngFor="let contact of contactsList" 
+             class="contact-item"
+             [class.selected]="contact.selected"
+             (click)="toggleContactSelection(contact)">
+          <div class="contact-avatar">
+            <span>{{ contact.name[0] }}</span>
+            <div *ngIf="contact.selected" class="check-dot">
+              <ion-icon name="checkmark"></ion-icon>
+            </div>
+          </div>
+          <span class="contact-name-txt">{{ contact.name.split(' ')[0] }}</span>
+        </div>
+      </div>
 
-  <div class="settings-list">
-    <button class="settings-item">
-      <div class="item-icon-avatar">
-        <ion-icon name="location" class="item-inner-icon"></ion-icon>
+      <!-- Seletor de Duração -->
+      <div class="duration-section ion-margin-top">
+        <p class="label-txt">Duração da Partilha</p>
+        <div class="duration-options">
+          <button class="duration-chip" [class.active]="selectedDuration === '1h'" (click)="selectedDuration = '1h'">1 hora</button>
+          <button class="duration-chip" [class.active]="selectedDuration === '2h'" (click)="selectedDuration = '2h'">2 horas</button>
+          <button class="duration-chip" [class.active]="selectedDuration === '5h'" (click)="selectedDuration = '5h'">5 horas</button>
+          <button class="duration-chip" [class.active]="selectedDuration === 'sempre'" (click)="selectedDuration = 'sempre'">Sempre</button>
+        </div>
       </div>
-      <div class="item-content">
-        <span class="item-title">Histórico de Locais</span>
-        <span class="item-subtitle">Ver todos os lugares visitados</span>
-      </div>
-      <ion-icon name="chevron-forward-outline" class="item-arrow"></ion-icon>
-    </button>
+    </div>
 
-    <button class="settings-item">
-      <div class="item-icon-avatar">
-        <ion-icon name="notifications" class="item-inner-icon"></ion-icon>
-      </div>
-      <div class="item-content">
-        <span class="item-title">Notificações</span>
-        <span class="item-subtitle">Gerir alertas e lembretes</span>
-      </div>
-      <ion-icon name="chevron-forward-outline" class="item-arrow"></ion-icon>
-    </button>
-
-    <button class="settings-item">
-      <div class="item-icon-avatar">
-        <ion-icon name="shield-half" class="item-inner-icon"></ion-icon>
-      </div>
-      <div class="item-content">
-        <span class="item-title">Privacidade e Segurança</span>
-        <span class="item-subtitle">Controlar dados e permissões</span>
-      </div>
-      <ion-icon name="chevron-forward-outline" class="item-arrow"></ion-icon>
-    </button>
-
-    <button class="settings-item logout-item">
-      <div class="item-icon-avatar logout-avatar">
-        <ion-icon name="log-out" class="item-inner-icon logout-icon"></ion-icon>
-      </div>
-      <div class="item-content">
-        <span class="item-title logout-title">Terminar Sessão</span>
-      </div>
-    </button>
+    <div class="sheet-footer">
+      <ion-button expand="block" fill="clear" color="medium" (click)="showShareSheet = false">Cancelar</ion-button>
+      <ion-button expand="block" color="tertiary" (click)="confirmShare()">Iniciar Transmissão</ion-button>
+    </div>
   </div>
 
-  <!-- SHARE LOCATION SHEET (ion-modal as bottom sheet) -->
-  <ion-modal [isOpen]="showShareSheet" (didDismiss)="showShareSheet = false" [initialBreakpoint]="0.7" [breakpoints]="[0, 0.7, 0.95]">
-    <ng-template>
-      <ion-content class="ion-padding custom-sheet">
-        <div class="sheet-header">
-          <h2 class="sheet-title">Partilha em Direto</h2>
-          <ion-button fill="clear" (click)="showShareSheet = false" class="close-btn">
-            <ion-icon slot="icon-only" name="close"></ion-icon>
-          </ion-button>
-        </div>
-
-        <!-- 1. Contacts selection -->
-        <div class="sheet-section">
-          <div class="section-label-row ion-margin-bottom">
-            <ion-icon name="people" class="section-label-icon"></ion-icon>
-            <ion-label class="section-label-text">Selecionar Contactos (Família)</ion-label>
-          </div>
-
-          <div class="contacts-grid">
-            <button 
-              *ngFor="let contact of contacts" 
-              (click)="toggleContact(contact.id)"
-              [class.selected]="selectedContacts.includes(contact.id)"
-              class="contact-card"
-            >
-              <div class="contact-avatar-badge">{{ contact.avatar }}</div>
-              <span class="contact-name">{{ contact.name }}</span>
-              <div *ngIf="selectedContacts.includes(contact.id)" class="checked-circle">
-                <ion-icon name="checkmark" class="checked-icon"></ion-icon>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        <!-- 2. Durations selection -->
-        <div class="sheet-section ion-margin-top ion-margin-bottom">
-          <div class="section-label-row ion-margin-bottom">
-            <ion-icon name="time" class="section-label-icon"></ion-icon>
-            <ion-label class="section-label-text">Duração</ion-label>
-          </div>
-
-          <div class="durations-grid">
-            <button 
-              *ngFor="let dur of durations" 
-              (click)="duration = dur"
-              [class.active]="duration === dur"
-              class="duration-btn"
-            >
-              {{ dur }}
-            </button>
-          </div>
-        </div>
-
-        <!-- 3. Confirm trigger -->
-        <ion-button 
-          expand="block" 
-          color="tertiary" 
-          [disabled]="selectedContacts.length === 0"
-          (click)="confirmShare()"
-          class="submit-btn"
-        >
-          Confirmar Partilha
-        </ion-button>
-      </ion-content>
-    </ng-template>
-  </ion-modal>
 </ion-content>
