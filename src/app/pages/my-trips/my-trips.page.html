@@ -1,45 +1,64 @@
-<ion-header [translucent]="true">
+<ion-header [translucent]="true" class="ion-no-border">
   <ion-toolbar color="primary">
-    <ion-title>Minhas Viagens</ion-title>
+    <ion-title class="font-bold ion-text-center">Minhas Viagens</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding bg-light">
-  <h1 class="page-title">Minhas Viagens</h1>
-
-  <div class="trips-list">
-    <div *ngFor="let trip of trips" class="trip-card">
-      <h3 class="trip-name">{{ trip.name }}</h3>
-
-      <div class="trip-meta">
-        <div class="meta-item">
-          <ion-icon name="calendar-outline" class="meta-icon"></ion-icon>
-          <span class="meta-text">{{ trip.startDate }} - {{ trip.endDate }}</span>
-        </div>
-
-        <div class="meta-item">
-          <ion-icon name="location-outline" class="meta-icon"></ion-icon>
-          <span class="meta-text">{{ trip.locations }} locais visitados</span>
-        </div>
-
-        <div class="meta-item">
-          <ion-icon name="cash-outline" class="meta-icon"></ion-icon>
-          <span class="meta-text">{{ trip.totalSpent.toFixed(2) }}€ gastos</span>
-        </div>
-      </div>
-
-      <div class="rating-stars">
-        <ion-icon 
-          *ngFor="let star of getStars(trip.rating)" 
-          name="star" 
-          class="star-icon filled"
-        ></ion-icon>
-        <ion-icon 
-          *ngFor="let star of getEmptyStars(trip.rating)" 
-          name="star-outline" 
-          class="star-icon empty"
-        ></ion-icon>
-      </div>
-    </div>
+<ion-content [fullscreen]="true" class="ion-padding bg-container">
+  
+  <div class="trips-header ion-margin-bottom">
+    <h2>Seu Histórico de Aventuras</h2>
+    <p>Clique em uma viagem para visualizar no mapa.</p>
   </div>
+
+  <!-- Listagem de Viagens (Requisito 8 e 11) -->
+  <div class="trips-list">
+    <ion-card *ngFor="let trip of tripsList" 
+              (click)="goToMapForTrip(trip.id)" 
+              class="trip-card ion-no-margin ion-margin-bottom ripple-active">
+      
+      <ion-card-header>
+        <div class="card-title-group">
+          <h3>{{ trip.name }}</h3>
+          <!-- Tag de Status Simbolizando Viagem Ativa se for a mais recente -->
+          <span *ngIf="trip.id === '1'" class="status-badge active">Ativa</span>
+        </div>
+      </ion-card-header>
+
+      <ion-card-content>
+        <!-- Detalhes da Viagem usando Ícones da Framework (Requisito 6 e 11) -->
+        <div class="trip-details">
+          
+          <!-- Calendário -->
+          <div class="detail-row">
+            <ion-icon name="calendar-outline" color="tertiary"></ion-icon>
+            <span>{{ trip.startDate }} - {{ trip.endDate }}</span>
+          </div>
+
+          <!-- Locais Visitados -->
+          <div class="detail-row">
+            <ion-icon name="location-outline" color="tertiary"></ion-icon>
+            <span>{{ trip.locations }} locais visitados</span>
+          </div>
+
+          <!-- Custo Total da Viagem -->
+          <div class="detail-row">
+            <ion-icon name="cash-outline" color="tertiary"></ion-icon>
+            <span class="font-semibold">{{ trip.totalSpent | currency:'EUR':'symbol':'1.2-2':'pt-BR' }} gastos</span>
+          </div>
+
+        </div>
+
+        <!-- Avaliação por Estrelas (Requisito 6 e 11) -->
+        <div class="rating-stars ion-margin-top">
+          <ion-icon *ngFor="let idx of getStarsArray(trip.rating)" 
+                    name="star" 
+                    [color]="idx < trip.rating ? 'warning' : 'medium'"
+                    class="star-icon"></ion-icon>
+        </div>
+
+      </ion-card-content>
+    </ion-card>
+  </div>
+
 </ion-content>

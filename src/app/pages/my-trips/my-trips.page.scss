@@ -1,76 +1,106 @@
-.page-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--ion-color-primary);
-  margin-bottom: 24px;
-  margin-top: 12px;
+/* Estilos para a listagem de viagens - PassearContigo */
+
+.bg-container {
+  --background: var(--app-muted);
 }
 
-.trips-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.trip-card {
-  background: white;
-  border-radius: 20px;
-  padding: 20px;
-  box-shadow: 0 4px 12px rgba(10, 31, 68, 0.05);
-  border: 1px solid rgba(10, 31, 68, 0.08);
-  transition: transform 0.2s, box-shadow 0.2s;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(10, 31, 68, 0.1);
+.trips-header {
+  h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--app-foreground);
+    margin: 8px 0 4px 0;
+  }
+  
+  p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--app-muted-foreground);
   }
 }
 
-.trip-name {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--ion-color-primary);
-  margin: 0 0 12px 0;
+/* Customização dos Cards de Viagem (Requisito 13 CSS Custom Properties) */
+.trip-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(10, 31, 68, 0.05);
+  border: 1px solid var(--app-border);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  
+  &:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 6px rgba(10, 31, 68, 0.08);
+  }
+
+  ion-card-header {
+    padding: 16px 16px 10px;
+    
+    .card-title-group {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      
+      h3 {
+        margin: 0;
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--app-foreground);
+      }
+    }
+  }
+
+  ion-card-content {
+    padding: 0 16px 16px;
+  }
 }
 
-.trip-meta {
+/* Badges de Status da Viagem */
+.status-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  
+  &.active {
+    background: rgba(25, 118, 210, 0.1);
+    color: var(--ion-color-tertiary);
+  }
+}
+
+/* Linhas de Informações Úteis */
+.trip-details {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.meta-item {
-  display: flex;
-  align-items: center;
   gap: 10px;
-  color: var(--ion-color-medium);
+  
+  .detail-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.9rem;
+    color: var(--app-muted-foreground);
+    
+    ion-icon {
+      font-size: 1.2rem;
+    }
+  }
 }
 
-.meta-icon {
-  font-size: 18px;
-  color: var(--ion-color-tertiary);
+.font-semibold {
+  font-weight: 600;
+  color: var(--app-foreground);
 }
 
-.meta-text {
-  font-size: 14px;
-  font-weight: 500;
-}
-
+/* Estrelas de Avaliação */
 .rating-stars {
   display: flex;
   gap: 4px;
-}
-
-.star-icon {
-  font-size: 18px;
-}
-
-.star-icon.filled {
-  color: #ffc409;
-}
-
-.star-icon.empty {
-  color: var(--ion-color-medium);
-  opacity: 0.5;
+  border-top: 1px solid rgba(10, 31, 68, 0.08);
+  padding-top: 12px;
+  
+  .star-icon {
+    font-size: 1.1rem;
+  }
 }

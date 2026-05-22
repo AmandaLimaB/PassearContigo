@@ -1,45 +1,38 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { DataService, Trip } from '../../services/data.service';
 
-/**
- * Page component representing the My Trips list.
- * Displays all past and current trips loaded from local storage.
- * 
- * @author Antigravity
- */
 @Component({
   selector: 'app-my-trips',
   templateUrl: './my-trips.page.html',
   styleUrls: ['./my-trips.page.scss'],
 })
 export class MyTripsPage implements OnInit {
-  trips: Trip[] = [];
+  // Lista de viagens passadas e atual da usuária
+  tripsList: Trip[] = [];
 
-  constructor(private dataService: DataService) {}
+  constructor(
+    private dataService: DataService,
+    private router: Router
+  ) { }
 
-  async ngOnInit() {
-    await this.loadTrips();
+  ngOnInit() {
   }
 
+  // Carrega as informações dinamicamente a cada entrada na página (Requisito 9 e 15)
   async ionViewWillEnter() {
-    await this.loadTrips();
+    this.tripsList = await this.dataService.getTrips();
   }
 
-  /**
-   * Fetches the current list of trips from DataService.
-   */
-  async loadTrips() {
-    this.trips = await this.dataService.getTrips();
+  // Navega de volta ao mapa, passando o ID da viagem como parâmetro de rota (Requisito 4 e 5)
+  goToMapForTrip(tripId: string) {
+    this.router.navigate(['/tabs/map'], {
+      queryParams: { tripId: tripId }
+    });
   }
 
-  /**
-   * Helper to generate dummy arrays for star rendering.
-   */
-  getStars(rating: number): number[] {
-    return Array(rating);
-  }
-
-  getEmptyStars(rating: number): number[] {
-    return Array(5 - rating);
+  // Gera um array auxiliar para renderizar as estrelas da nota de viagem
+  getStarsArray(rating: number): number[] {
+    return Array(5).fill(0).map((_, i) => i);
   }
 }
