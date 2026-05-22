@@ -1,208 +1,212 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ToastController } from '@ionic/angular';
-import { DataService, VisitedLocation } from '../../services/data.service';
+import { DataService, MapLocation, VisitedLocation, Expense } from '../../services/data.service';
 
+// Definição dos possíveis passos do fluxo de registro de visita
 type FlowStep = 'map' | 'confirm' | 'feedback' | 'addRecord' | 'photo' | 'cost';
 
-/**
- * Page component representing the main Map flow.
- * Manages checking into locations, submitting feedback, 
- * adding photos, and registering costs.
- * 
- * @author Antigravity
- */
 @Component({
   selector: 'app-map',
   templateUrl: './map.page.html',
   styleUrls: ['./map.page.scss'],
 })
 export class MapPage implements OnInit {
-  // Navigation flow state machine
+  // Controle do passo ativo na UI do mapa
   currentStep: FlowStep = 'map';
   
-  // Current active location for interaction
+  // Localização simulada atual do usuário GPS
   currentLocationName = 'Santuário de Santa Luzia';
   
-  // Map markers and visited locations status
-  visitedLocations: VisitedLocation[] = [];
-  
-  // Active states for map indicators
-  gpsActive = true;
+  // Flag que simula se a partilha de localização está ativa (sincronizada com o Perfil)
   sharingLocation = false;
 
-  // Local state for modals/forms
-  rating = 0;
-  comment = '';
-  capturedPhoto: string | null = null;
-  costAmount = '';
-  costCategory = 'Entradas/Cultura';
+  // Listas de locais do mapa e locais visitados obtidas do Service
+  mapLocations: MapLocation[] = [];
+  visitedLocations: VisitedLocation[] = [];
 
-  // Available expense categories
-  categories = [
-    'Entradas/Cultura',
-    'Alimentação',
-    'Transporte',
-    'Alojamento',
-    'Compras',
-    'Outro'
-  ];
+  // Dados coletados temporariamente durante o fluxo de visita
+  tempRating = 5;
+  tempComment = '';
+  tempCostAmount: number | null = null;
+  tempCostCategory = 'Alimentação';
+  tempPhotoUrl = '';
 
   constructor(
     private dataService: DataService,
+    private route: ActivatedRoute,
+    private router: Router,
     private toastController: ToastController
-  ) {}
+  ) { }
 
   async ngOnInit() {
-    await this.loadLocations();
+    // Escuta parâmetros de rota dinâmicos para suportar navegação entre páginas (Requisito 4 e 5)
+    this.route.queryParams.subscribe(async params => {
+      await this.loadData();
+      
+      // Se vier uma localização por parâmetro, destaca ela no mapa com um brinde informativo
+      if (params['location']) {
+        const locName = params['location'];
+        this.presentToast(`Visualizando localização: ${locName}`);
+        
+        // Simula focar o mapa no local vindo por parâmetro
+        const matched = this.mapLocations.find(l => l.name.toLowerCase() === locName.toLowerCase());
+        if (matched) {
+          this.currentLocationName = matched.name;
+        }
+      }
+      
+      // Se vier uma viagem focada por parâmetro
+      if (params['tripId']) {
+        this.presentToast(`Carregando mapa para a viagem #${params['tripId']}`);
+      }
+    });
   }
 
   async ionViewWillEnter() {
-    await this.loadLocations();
-  }
-
-  /**
-   * Loads locations list from DataService.
-   */
-  async loadLocations() {
-    this.visitedLocations = await this.dataService.getLocations();
-  }
-
-  /**
-   * Helper to display Ionic toast notifications.
-   */
-  async showToast(message: string, color: string = 'success') {
-    const toast = await this.toastController.create({
-      message,
-      duration: 3000,
-      position: 'bottom',
-      color
+    await this.loadData();
+    // Simula a sincronização da partilha ativa buscando um registro temporário no storage
+    this.dataService.getVisitedLocations().then(async () => {
+      // Usaremos o storage para ler se o compartilhamento está ativo no perfil
+      // Para simular a partilha ativa que aparece no topo
+      const storage = (this.dataService as any)._storage;
+      if (storage) {
+        const isSharing = await storage.get('sharing_active');
+        this.sharingLocation = !!isSharing;
+      }
     });
-    await toast.present();
   }
 
-  // State transitions
+  // Carrega informações mescladas do JSON e do banco Ionic Storage (Requisito 9 e 10)
+  async loadData() {
+    this.mapLocations = await this.dataService.getMapLocations();
+    this.visitedLocations = await this.dataService.getVisitedLocations();
+  }
 
-  /**
-   * Triggered by FAB click. Opens the confirmation dialog.
-   */
+  // Verifica se um determinado local possui um registro completo gravado (Requisito 11)
+  isLocationVisited(locationName: string): boolean {
+    const found = this.visitedLocations.find(v => v.name === locationName);
+    return !!found && found.hasRecord;
+  }
+
+  // Retorna a URL da foto de um local visitado, se houver
+  getLocationPhoto(locationName: string): string {
+    const found = this.visitedLocations.find(v => v.name === locationName);
+    return found?.photoUrl || '';
+  }
+
+  // Dispara o início do fluxo de confirmação ao clicar no FAB (Requisito 11)
   handleFABClick() {
     this.currentStep = 'confirm';
   }
 
-  /**
-   * Resets all modal values and returns to map view.
-   */
-  cancelFlow() {
-    this.currentStep = 'map';
-    this.rating = 0;
-    this.comment = '';
-    this.capturedPhoto = null;
-    this.costAmount = '';
-    this.costCategory = 'Entradas/Cultura';
-  }
-
-  /**
-   * Confirms user's current location and advances to feedback.
-   */
+  // Confirmação de que o usuário chegou ao local correto
   confirmLocation() {
     this.currentStep = 'feedback';
   }
 
-  /**
-   * Submits feedback (rating + comment) to storage.
-   */
+  // Submissão do feedback inicial (avaliação por estrelas e comentários)
   async submitFeedback() {
-    if (this.rating > 0) {
-      await this.dataService.updateLocationRecord(this.currentLocationName, {
-        rating: this.rating,
-        comment: this.comment
-      });
-      await this.loadLocations();
-      this.currentStep = 'addRecord';
+    if (!this.tempComment.trim()) {
+      this.presentToast('Por favor, adicione um comentário sobre o local.');
+      return;
     }
+    
+    // Salva estado intermediário no banco usando o Service
+    const visited: VisitedLocation = {
+      id: Date.now().toString(),
+      name: this.currentLocationName,
+      hasRecord: true,
+      rating: this.tempRating,
+      comment: this.tempComment
+    };
+    
+    await this.dataService.saveVisitedLocation(visited);
+    await this.loadData();
+    
+    // Avança para a oferta de registros adicionais (Foto ou Custo)
+    this.currentStep = 'addRecord';
   }
 
-  /**
-   * Closes the additional records sheet and completes the flow.
-   */
-  async finishRecord() {
-    await this.showToast('Visita registada com sucesso!');
-    this.cancelFlow();
-    await this.loadLocations();
+  // Simula a captura de fotos do celular, permitindo escolher imagens ilustrativas
+  async savePhoto(presetPhoto: string) {
+    this.tempPhotoUrl = presetPhoto;
+    
+    // Obtém o registro existente deste local para complementar com a foto
+    const visitedList = await this.dataService.getVisitedLocations();
+    const existing = visitedList.find(loc => loc.name === this.currentLocationName);
+    
+    const updated: VisitedLocation = {
+      id: existing?.id || Date.now().toString(),
+      name: this.currentLocationName,
+      hasRecord: true,
+      rating: existing?.rating || 5,
+      comment: existing?.comment || '',
+      photoUrl: this.tempPhotoUrl
+    };
+    
+    await this.dataService.saveVisitedLocation(updated);
+    await this.loadData();
+    
+    await this.presentToast('Fotografia salva com sucesso!');
+    this.currentStep = 'addRecord';
   }
 
-  /**
-   * Navigates to Photo Capture step.
-   */
-  goToPhoto() {
-    this.currentStep = 'photo';
-  }
-
-  /**
-   * Captures picture from file input interface.
-   */
-  handleFileSelect(event: any) {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        this.capturedPhoto = reader.result as string;
-      };
-      reader.readAsDataURL(file);
-    }
-  }
-
-  /**
-   * Saves mock photo and returns to adding records.
-   */
-  async savePhoto() {
-    if (this.capturedPhoto) {
-      await this.dataService.updateLocationRecord(this.currentLocationName, {
-        photoUrl: this.capturedPhoto
-      });
-      await this.showToast('Foto guardada!');
-      await this.loadLocations();
-      this.currentStep = 'addRecord';
-    }
-  }
-
-  /**
-   * Navigates to Cost Entry step.
-   */
-  goToCost() {
-    this.currentStep = 'cost';
-  }
-
-  /**
-   * Registers a cost for the location and returns to adding records.
-   */
+  // Registra despesas financeiras associadas a este local da viagem
   async saveCost() {
-    const numericAmount = parseFloat(this.costAmount.replace(',', '.'));
-    if (!isNaN(numericAmount) && numericAmount > 0) {
-      // 1. Save cost inside the location record
-      await this.dataService.updateLocationRecord(this.currentLocationName, {
-        costAmount: numericAmount,
-        costCategory: this.costCategory
-      });
-
-      // 2. Add expense record globally for finances
-      await this.dataService.addExpense({
-        category: this.costCategory,
-        amount: numericAmount,
-        location: this.currentLocationName
-      });
-
-      await this.showToast(`Custo de ${numericAmount.toFixed(2)}€ registado!`);
-      await this.loadLocations();
-      this.currentStep = 'addRecord';
+    if (!this.tempCostAmount || this.tempCostAmount <= 0) {
+      this.presentToast('Por favor, informe um valor de custo válido.');
+      return;
     }
+    
+    const newExpense: Expense = {
+      id: Date.now().toString(),
+      category: this.tempCostCategory,
+      amount: this.tempCostAmount,
+      location: this.currentLocationName,
+      date: new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+    };
+    
+    // Grava no Storage central através do Service (Requisito 9 e 15)
+    await this.dataService.saveExpense(newExpense);
+    await this.loadData();
+    
+    await this.presentToast(`Despesa de €${this.tempCostAmount.toFixed(2)} registrada!`);
+    
+    // Limpa campos e retorna ao menu de registros adicionais
+    this.tempCostAmount = null;
+    this.currentStep = 'addRecord';
   }
 
-  /**
-   * Helper to parse floats in the HTML template safely.
-   */
-  parseFloat(val: string): number {
-    if (!val) return 0;
-    return parseFloat(val.replace(',', '.'));
+  // Conclui todo o fluxo de visita do local e retorna ao estado normal do mapa
+  finishVisit() {
+    this.presentToast('Visita registrada com absoluto sucesso!');
+    this.currentStep = 'map';
+    // Limpa os dados temporários
+    this.tempComment = '';
+    this.tempRating = 5;
+    this.tempPhotoUrl = '';
+  }
+
+  // Cancela o fluxo em qualquer ponto e retorna para o mapa
+  cancelFlow() {
+    this.currentStep = 'map';
+  }
+
+  // Auxiliar para exibição de mensagens rápidas no rodapé da tela
+  async presentToast(message: string) {
+    const toast = await this.toastController.create({
+      message: message,
+      duration: 2500,
+      position: 'bottom',
+      cssClass: 'custom-toast'
+    });
+    await toast.present();
+  }
+
+  // Permite selecionar um local do mapa clicando diretamente nele
+  selectLocation(location: MapLocation) {
+    this.currentLocationName = location.name;
+    this.presentToast(`Local selecionado: ${location.name}. Clique no botão azul abaixo para registrar sua visita!`);
   }
 }
