@@ -10,6 +10,7 @@ type FlowStep = 'map' | 'confirm' | 'feedback' | 'addRecord' | 'photo' | 'cost';
   selector: 'app-map',
   templateUrl: './map.page.html',
   styleUrls: ['./map.page.scss'],
+  standalone: false,
 })
 export class MapPage implements OnInit {
   // Controle do passo ativo na UI do mapa

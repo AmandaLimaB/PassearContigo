@@ -14,6 +14,7 @@ export interface CategoryTotal {
   selector: 'app-finances',
   templateUrl: './finances.page.html',
   styleUrls: ['./finances.page.scss'],
+  standalone: false,
 })
 export class FinancesPage implements OnInit {
   // Lista de despesas financeiras registradas

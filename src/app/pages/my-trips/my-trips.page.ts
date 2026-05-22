@@ -6,6 +6,7 @@ import { DataService, Trip } from '../../services/data.service';
   selector: 'app-my-trips',
   templateUrl: './my-trips.page.html',
   styleUrls: ['./my-trips.page.scss'],
+  standalone: false,
 })
 export class MyTripsPage implements OnInit {
   // Lista de viagens passadas e atual da usuária
