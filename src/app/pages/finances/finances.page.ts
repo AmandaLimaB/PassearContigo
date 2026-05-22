@@ -1,72 +1,81 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { DataService, Expense } from '../../services/data.service';
 
-/**
- * Page component representing the Finances tab.
- * Aggregates expenses by category and lists recent expenses.
- * 
- * @author Antigravity
- */
+// Interface auxiliar para os cálculos de despesa por categoria
+export interface CategoryTotal {
+  category: string;
+  amount: number;
+  percentage: number;
+  colorVar: string;
+}
+
 @Component({
   selector: 'app-finances',
   templateUrl: './finances.page.html',
   styleUrls: ['./finances.page.scss'],
 })
 export class FinancesPage implements OnInit {
-  expenses: Expense[] = [];
+  // Lista de despesas financeiras registradas
+  expensesList: Expense[] = [];
+  
+  // Total somado de todas as despesas da viagem
   totalSpent = 0;
-  categoryTotals: { category: string; amount: number; percentage: number; colorClass: string }[] = [];
 
-  // Color mappings matching reference CSS variables
-  categoryColors: Record<string, string> = {
-    'Entradas/Cultura': 'culture-bar',
-    'Alimentação': 'food-bar',
-    'Transporte': 'transport-bar',
-    'Alojamento': 'lodging-bar',
-    'Compras': 'shopping-bar',
-    'Outro': 'other-bar'
+  // Lista sumarizada por categorias para renderização das barras de progresso
+  categoryTotals: CategoryTotal[] = [];
+
+  // Mapeamento de cores premium para cada categoria (Requisito 16)
+  private categoryColors: Record<string, string> = {
+    'Entradas/Cultura': 'var(--app-chart-1)',
+    'Alimentação': 'var(--app-chart-2)',
+    'Transporte': 'var(--app-chart-3)',
+    'Alojamento': 'var(--app-chart-4)',
+    'Compras': 'var(--app-chart-5)'
   };
 
-  constructor(private dataService: DataService) {}
+  constructor(
+    private dataService: DataService,
+    private router: Router
+  ) { }
 
-  async ngOnInit() {
-    await this.loadExpenses();
+  ngOnInit() {
   }
 
+  // Atualiza as despesas e recalcula os totais sempre que entra na página (Requisito 9 e 15)
   async ionViewWillEnter() {
-    await this.loadExpenses();
+    await this.loadExpensesData();
   }
 
-  /**
-   * Fetches expense list and calculates category aggregations.
-   */
-  async loadExpenses() {
-    this.expenses = await this.dataService.getExpenses();
+  // Carrega e processa as informações de despesa
+  async loadExpensesData() {
+    this.expensesList = await this.dataService.getExpenses();
     
-    // Sum total expenses
-    this.totalSpent = this.expenses.reduce((sum, exp) => sum + exp.amount, 0);
+    // Calcula o valor total geral gasto
+    this.totalSpent = this.expensesList.reduce((sum, exp) => sum + exp.amount, 0);
 
-    // Group expenses by category
-    const totals: Record<string, number> = {};
-    this.expenses.forEach(exp => {
-      totals[exp.category] = (totals[exp.category] || 0) + exp.amount;
+    // Agrupa e soma despesas por categoria
+    const rawTotals: Record<string, number> = {};
+    this.expensesList.forEach(exp => {
+      rawTotals[exp.category] = (rawTotals[exp.category] || 0) + exp.amount;
     });
 
-    // Structure category data for display
-    this.categoryTotals = Object.keys(totals).map(category => {
-      const amount = totals[category];
+    // Mapeia para a estrutura da UI calculando porcentagens dinâmicas
+    this.categoryTotals = Object.entries(rawTotals).map(([category, amount]) => {
       const percentage = this.totalSpent > 0 ? (amount / this.totalSpent) * 100 : 0;
-      const colorClass = this.categoryColors[category] || 'other-bar';
-      
       return {
-        category,
-        amount,
-        percentage,
-        colorClass
+        category: category,
+        amount: amount,
+        percentage: parseFloat(percentage.toFixed(1)),
+        colorVar: this.categoryColors[category] || 'var(--ion-color-tertiary)'
       };
-    });
+    }).sort((a, b) => b.amount - a.amount); // Ordena por valor gasto decrescente
+  }
 
-    // Sort category breakdown by largest amount
-    this.categoryTotals.sort((a, b) => b.amount - a.amount);
+  // Ao clicar em uma despesa recente, redireciona o usuário para o mapa destacando o local (Requisito 4 e 5)
+  viewOnMap(locationName: string) {
+    this.router.navigate(['/tabs/map'], {
+      queryParams: { location: locationName }
+    });
   }
 }

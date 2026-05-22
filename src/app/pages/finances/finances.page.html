@@ -1,61 +1,77 @@
-<ion-header [translucent]="true">
+<ion-header [translucent]="true" class="ion-no-border">
   <ion-toolbar color="primary">
-    <ion-title>Finanças</ion-title>
+    <ion-title class="font-bold ion-text-center">Finanças</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding bg-light">
-  <h1 class="page-title">Finanças</h1>
-
-  <!-- Total Summary Card -->
-  <div class="summary-card">
+<ion-content [fullscreen]="true" class="ion-padding bg-container">
+  
+  <!-- Painel Principal de Gastos (Fator WOW Estético) -->
+  <div class="summary-card ion-margin-bottom">
     <div class="summary-header">
-      <ion-icon name="wallet-outline" class="summary-icon"></ion-icon>
-      <span class="summary-subtitle">Total Gasto</span>
+      <ion-icon name="cash-outline"></ion-icon>
+      <span>Total Gasto</span>
     </div>
-    <h2 class="summary-amount">{{ totalSpent.toFixed(2) }}€</h2>
-    <div class="summary-badge">
-      <ion-icon name="trending-up-outline" class="badge-icon"></ion-icon>
-      <span class="badge-text">Viagem atual</span>
+    <h1 class="summary-value">{{ totalSpent | currency:'EUR':'symbol':'1.2-2':'pt-BR' }}</h1>
+    <div class="summary-subtext">
+      <ion-icon name="trending-up-outline"></ion-icon>
+      <span>Viagem Atual (Norte de Portugal)</span>
     </div>
   </div>
 
-  <!-- Category Breakdown Card -->
-  <div class="breakdown-card">
-    <div class="card-header">
-      <ion-icon name="pie-chart-outline" class="header-icon"></ion-icon>
-      <h3 class="header-title">Por Categoria</h3>
+  <!-- Detalhamento por Categorias (Requisito 11 e 13) -->
+  <ion-card class="category-breakdown-card ion-no-margin ion-margin-bottom">
+    <div class="card-custom-header ion-padding">
+      <ion-icon name="pie-chart" color="tertiary"></ion-icon>
+      <h3>Por Categoria</h3>
     </div>
+    
+    <div class="card-custom-body ion-padding-horizontal ion-padding-bottom">
+      <div *ngIf="categoryTotals.length === 0" class="empty-state">
+        <p>Nenhuma despesa registrada nesta viagem.</p>
+      </div>
 
-    <div class="breakdown-list">
-      <div *ngFor="let cat of categoryTotals" class="breakdown-item">
-        <div class="breakdown-labels">
+      <div *ngFor="let cat of categoryTotals" class="category-bar-group ion-margin-bottom">
+        <div class="category-info-row">
           <span class="category-name">{{ cat.category }}</span>
-          <span class="category-amount">{{ cat.amount.toFixed(2) }}€</span>
+          <span class="category-value">{{ cat.amount | currency:'EUR':'symbol':'1.2-2':'pt-BR' }} ({{ cat.percentage }}%)</span>
         </div>
-        <div class="progress-track">
-          <div 
-            class="progress-fill" 
-            [ngClass]="cat.colorClass"
-            [style.width]="cat.percentage + '%'"
-          ></div>
+        <!-- Barra de Progresso Customizada Manipulando CSS (Requisito 13 e 16) -->
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill"
+               [style.width.%]="cat.percentage"
+               [style.background]="cat.colorVar"></div>
         </div>
       </div>
     </div>
+  </ion-card>
+
+  <!-- Lista de Despesas Recentes com interação (Requisito 5 e 11) -->
+  <div class="recent-expenses-header">
+    <h3>Despesas Recentes</h3>
+    <p>Clique em uma despesa para localizá-la no mapa.</p>
   </div>
 
-  <!-- Recent Expenses Section -->
-  <h3 class="section-title">Despesas Recentes</h3>
+  <div class="expenses-list ion-margin-top">
+    <div *ngIf="expensesList.length === 0" class="empty-state ion-padding">
+      <p>Nenhuma despesa recente encontrada.</p>
+    </div>
 
-  <div class="expenses-list">
-    <div *ngFor="let expense of expenses" class="expense-row">
+    <!-- Cada item dispara um redirecionamento ao mapa ao ser clicado (Requisito 5) -->
+    <div *ngFor="let expense of expensesList" 
+         class="expense-row ripple-active ion-margin-bottom"
+         (click)="viewOnMap(expense.location)">
+      
       <div class="expense-info">
-        <p class="expense-location">{{ expense.location }}</p>
+        <p class="expense-loc">{{ expense.location }}</p>
         <p class="expense-meta">{{ expense.category }} • {{ expense.date }}</p>
       </div>
-      <div class="expense-value">
-        {{ expense.amount.toFixed(2) }}€
+
+      <div class="expense-amount font-bold">
+        <span>- {{ expense.amount | currency:'EUR':'symbol':'1.2-2':'pt-BR' }}</span>
       </div>
+
     </div>
   </div>
+
 </ion-content>
