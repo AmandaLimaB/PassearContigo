@@ -1,21 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Storage } from '@ionic/storage-angular';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 
-export interface VisitedLocation {
-  id: string;
-  name: string;
-  lat: number;
-  lng: number;
-  hasRecord: boolean;
-  rating?: number;
-  comment?: string;
-  photoUrl?: string;
-  costAmount?: number;
-  costCategory?: string;
-}
-
+// Interface que define o formato de uma Viagem
 export interface Trip {
   id: string;
   name: string;
@@ -26,6 +14,7 @@ export interface Trip {
   rating: number;
 }
 
+// Interface que define o formato de uma Despesa
 export interface Expense {
   id: string;
   category: string;
@@ -34,19 +23,29 @@ export interface Expense {
   date: string;
 }
 
-/**
- * Service that manages the application state and data persistence.
- * Implements Ionic Storage for persistent local data and handles
- * reading initial setup from static JSON files.
- * 
- * @author Antigravity
- */
+// Interface que define o formato de um Local Visitado/Mapa
+export interface VisitedLocation {
+  id: string;
+  name: string;
+  hasRecord: boolean;
+  rating?: number;
+  comment?: string;
+  photoUrl?: string;
+}
+
+// Interface que define o formato dos locais no mapa
+export interface MapLocation {
+  name: string;
+  lat: number;
+  lng: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class DataService {
   private _storage: Storage | null = null;
-  private isInitialized = false;
+  private mockDataPath = 'assets/data/mock.json';
 
   constructor(
     private http: HttpClient,
@@ -55,132 +54,133 @@ export class DataService {
     this.init();
   }
 
-  /**
-   * Initializes the Ionic Storage system.
-   * If storage is empty, it loads initial mock data from mock.json.
-   */
+  // Inicializa o banco de dados local do Ionic Storage (Requisito 9)
   async init() {
-    if (this.isInitialized) return;
-    const storage = await this.storage.create();
-    this._storage = storage;
-
-    // Check if we already have data set in storage. If not, seed with mock data.
-    const hasData = await this._storage.get('locations');
-    if (!hasData) {
-      try {
-        const mockData = await firstValueFrom(this.http.get<{
-          locations: VisitedLocation[];
-          trips: Trip[];
-          expenses: Expense[];
-        }>('assets/data/mock.json'));
-
-        if (mockData) {
-          await this._storage.set('locations', mockData.locations);
-          await this._storage.set('trips', mockData.trips);
-          await this._storage.set('expenses', mockData.expenses);
-        }
-      } catch (error) {
-        console.error('Error loading initial mock data:', error);
-      }
+    if (!this._storage) {
+      const storage = await this.storage.create();
+      this._storage = storage;
     }
-    this.isInitialized = true;
   }
 
-  /**
-   * Helper to ensure storage is ready before running any operations.
-   */
-  private async ensureReady() {
-    if (!this.isInitialized) {
+  // Garante que o storage esteja pronto antes de qualquer operação
+  private async ensureStorageReady() {
+    if (!this._storage) {
       await this.init();
     }
   }
 
-  /**
-   * Retrieves all visited locations.
-   */
-  async getLocations(): Promise<VisitedLocation[]> {
-    await this.ensureReady();
-    return (await this._storage?.get('locations')) || [];
+  // Carrega os dados padrão do arquivo JSON (Requisito 10)
+  private getMockData(): Observable<any> {
+    return this.http.get<any>(this.mockDataPath);
   }
 
-  /**
-   * Saves or updates the list of visited locations.
-   */
-  async saveLocations(locations: VisitedLocation[]): Promise<void> {
-    await this.ensureReady();
-    await this._storage?.set('locations', locations);
+  // Retorna a lista de locais pré-definidos para o mapa
+  async getMapLocations(): Promise<MapLocation[]> {
+    try {
+      const data = await firstValueFrom(this.getMockData());
+      return data.locations || [];
+    } catch (error) {
+      console.error('Erro ao ler locais do JSON', error);
+      return [];
+    }
   }
 
-  /**
-   * Updates a single location with visit records (rating, comment, photo, cost).
-   */
-  async updateLocationRecord(
-    locationName: string, 
-    record: Partial<VisitedLocation>
-  ): Promise<void> {
-    const locations = await this.getLocations();
-    const updated = locations.map(loc => {
-      if (loc.name === locationName) {
-        return {
-          ...loc,
-          ...record,
-          hasRecord: true
-        };
-      }
-      return loc;
-    });
-    await this.saveLocations(updated);
-  }
-
-  /**
-   * Retrieves all trips.
-   */
+  // Obtém todas as viagens (mescla o mock estático do JSON com o Storage persistente)
   async getTrips(): Promise<Trip[]> {
-    await this.ensureReady();
-    return (await this._storage?.get('trips')) || [];
-  }
-
-  /**
-   * Saves the list of trips.
-   */
-  async saveTrips(trips: Trip[]): Promise<void> {
-    await this.ensureReady();
-    await this._storage?.set('trips', trips);
-  }
-
-  /**
-   * Retrieves all expenses.
-   */
-  async getExpenses(): Promise<Expense[]> {
-    await this.ensureReady();
-    return (await this._storage?.get('expenses')) || [];
-  }
-
-  /**
-   * Saves a new expense.
-   */
-  async addExpense(expense: Omit<Expense, 'id' | 'date'>): Promise<void> {
-    await this.ensureReady();
-    const expenses = await this.getExpenses();
-    const newExpense: Expense = {
-      ...expense,
-      id: Date.now().toString(),
-      date: new Date().toLocaleDateString('pt-PT', { day: 'numeric', month: 'short', year: 'numeric' })
-    };
-    expenses.unshift(newExpense); // Add at the beginning
-    await this._storage?.set('expenses', expenses);
-
-    // Update the total Spent in the active trip ("Norte de Portugal") for simulation
-    const trips = await this.getTrips();
-    const updatedTrips = trips.map(t => {
-      if (t.id === '1') {
-        return {
-          ...t,
-          totalSpent: t.totalSpent + expense.amount
-        };
+    await this.ensureStorageReady();
+    const storedTrips = await this._storage?.get('trips') || [];
+    
+    // Se não houver nada no storage, carregamos as viagens iniciais do JSON e salvamos
+    if (storedTrips.length === 0) {
+      try {
+        const data = await firstValueFrom(this.getMockData());
+        const initialTrips = data.trips || [];
+        await this._storage?.set('trips', initialTrips);
+        return initialTrips;
+      } catch (error) {
+        console.error('Erro ao buscar viagens do JSON', error);
+        return [];
       }
-      return t;
-    });
-    await this.saveTrips(updatedTrips);
+    }
+    return storedTrips;
+  }
+
+  // Adiciona ou atualiza uma viagem no Storage
+  async saveTrip(trip: Trip): Promise<Trip[]> {
+    await this.ensureStorageReady();
+    const trips = await this.getTrips();
+    
+    // Filtra para evitar duplicados e adiciona a nova
+    const updatedTrips = [trip, ...trips.filter(t => t.id !== trip.id)];
+    await this._storage?.set('trips', updatedTrips);
+    return updatedTrips;
+  }
+
+  // Obtém todas as despesas (mescla o mock do JSON com o Storage persistente)
+  async getExpenses(): Promise<Expense[]> {
+    await this.ensureStorageReady();
+    const storedExpenses = await this._storage?.get('expenses') || [];
+    
+    if (storedExpenses.length === 0) {
+      try {
+        const data = await firstValueFrom(this.getMockData());
+        const initialExpenses = data.expenses || [];
+        await this._storage?.set('expenses', initialExpenses);
+        return initialExpenses;
+      } catch (error) {
+        console.error('Erro ao buscar despesas do JSON', error);
+        return [];
+      }
+    }
+    return storedExpenses;
+  }
+
+  // Salva uma despesa no Storage
+  async saveExpense(expense: Expense): Promise<Expense[]> {
+    await this.ensureStorageReady();
+    const expenses = await this.getExpenses();
+    const updatedExpenses = [expense, ...expenses.filter(e => e.id !== expense.id)];
+    await this._storage?.set('expenses', updatedExpenses);
+    
+    // Atualiza também o total gasto na viagem ativa (simulado na primeira viagem da lista)
+    await this.updateActiveTripExpenses(expense.amount);
+    
+    return updatedExpenses;
+  }
+
+  // Adiciona o valor gasto na viagem atual
+  private async updateActiveTripExpenses(amount: number) {
+    const trips = await this.getTrips();
+    if (trips.length > 0) {
+      // Adiciona o gasto à primeira viagem como simulação da viagem ativa
+      trips[0].totalSpent += amount;
+      await this._storage?.set('trips', trips);
+    }
+  }
+
+  // Obtém todos os registros de locais visitados (persiste fotos, comentários, etc.)
+  async getVisitedLocations(): Promise<VisitedLocation[]> {
+    await this.ensureStorageReady();
+    return await this._storage?.get('visited_locations') || [];
+  }
+
+  // Salva o feedback/registro de visita de um determinado local no mapa
+  async saveVisitedLocation(visited: VisitedLocation): Promise<VisitedLocation[]> {
+    await this.ensureStorageReady();
+    const visitedList = await this.getVisitedLocations();
+    const updatedList = [
+      ...visitedList.filter(loc => loc.name !== visited.name),
+      visited
+    ];
+    await this._storage?.set('visited_locations', updatedList);
+    
+    // Incrementa também o número de locais visitados na viagem ativa para atualizar a UI
+    const trips = await this.getTrips();
+    if (trips.length > 0 && !visitedList.some(loc => loc.name === visited.name && loc.hasRecord)) {
+      trips[0].locations += 1;
+      await this._storage?.set('trips', trips);
+    }
+    
+    return updatedList;
   }
 }
