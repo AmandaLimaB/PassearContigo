@@ -1,25 +1,30 @@
+<!-- Estrutura de abas (Tabs) para navegação principal do aplicativo (Req. 3, 6 e 11) -->
 <ion-tabs>
-
   <ion-tab-bar slot="bottom">
-    <ion-tab-button tab="map">
-      <ion-icon name="map-outline"></ion-icon>
+    
+    <!-- Aba do Mapa (Página Principal) -->
+    <ion-tab-button tab="map" layout="icon-top">
+      <ion-icon name="map"></ion-icon>
       <ion-label>Mapa</ion-label>
     </ion-tab-button>
 
-    <ion-tab-button tab="my-trips">
-      <ion-icon name="airplane-outline"></ion-icon>
+    <!-- Aba de Viagens -->
+    <ion-tab-button tab="my-trips" layout="icon-top">
+      <ion-icon name="calendar"></ion-icon>
       <ion-label>Viagens</ion-label>
     </ion-tab-button>
 
-    <ion-tab-button tab="finances">
-      <ion-icon name="wallet-outline"></ion-icon>
+    <!-- Aba de Finanças -->
+    <ion-tab-button tab="finances" layout="icon-top">
+      <ion-icon name="cash"></ion-icon>
       <ion-label>Finanças</ion-label>
     </ion-tab-button>
 
-    <ion-tab-button tab="profile">
-      <ion-icon name="person-outline"></ion-icon>
+    <!-- Aba de Perfil -->
+    <ion-tab-button tab="profile" layout="icon-top">
+      <ion-icon name="person"></ion-icon>
       <ion-label>Perfil</ion-label>
     </ion-tab-button>
-  </ion-tab-bar>
 
+  </ion-tab-bar>
 </ion-tabs>

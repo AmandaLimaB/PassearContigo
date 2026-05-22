@@ -1,6 +1,8 @@
 import { NgModule } from '@angular/core';
 import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
 
+// Configuração das rotas principais da aplicação (Requisito 3 e 4)
+// Redireciona a raiz para a aba de abas (/tabs/map) por padrão
 const routes: Routes = [
   {
     path: '',

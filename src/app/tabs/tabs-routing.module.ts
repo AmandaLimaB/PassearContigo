@@ -1,8 +1,8 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-
 import { TabsPage } from './tabs.page';
 
+// Definição das rotas filhas para cada aba da aplicação (Requisito 3 e 4)
 const routes: Routes = [
   {
     path: '',
