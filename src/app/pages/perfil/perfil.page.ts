@@ -4,12 +4,12 @@ import { ScreenOrientation } from '@capacitor/screen-orientation';
 import { DataService } from '../../services/data.service';
 
 @Component({
-  selector: 'app-profile',
-  templateUrl: './profile.page.html',
-  styleUrls: ['./profile.page.scss'],
+  selector: 'app-perfil',
+  templateUrl: './perfil.page.html',
+  styleUrls: ['./perfil.page.scss'],
   standalone: false,
 })
-export class ProfilePage implements OnInit {
+export class PerfilPage implements OnInit {
   // Controle do estado da partilha de localização em tempo real
   sharingActive = false;
   showShareSheet = false;

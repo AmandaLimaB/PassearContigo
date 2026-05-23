@@ -7,12 +7,12 @@ import { DataService, MapLocation, VisitedLocation, Expense } from '../../servic
 type FlowStep = 'map' | 'confirm' | 'feedback' | 'addRecord' | 'photo' | 'cost';
 
 @Component({
-  selector: 'app-map',
-  templateUrl: './map.page.html',
-  styleUrls: ['./map.page.scss'],
+  selector: 'app-mapa',
+  templateUrl: './mapa.page.html',
+  styleUrls: ['./mapa.page.scss'],
   standalone: false,
 })
-export class MapPage implements OnInit {
+export class MapaPage implements OnInit {
   // Controle do passo ativo na UI do mapa
   currentStep: FlowStep = 'map';
   

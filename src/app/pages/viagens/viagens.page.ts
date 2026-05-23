@@ -4,12 +4,12 @@ import { ToastController } from '@ionic/angular';
 import { DataService, Trip } from '../../services/data.service';
 
 @Component({
-  selector: 'app-my-trips',
-  templateUrl: './my-trips.page.html',
-  styleUrls: ['./my-trips.page.scss'],
+  selector: 'app-viagens',
+  templateUrl: './viagens.page.html',
+  styleUrls: ['./viagens.page.scss'],
   standalone: false,
 })
-export class MyTripsPage implements OnInit {
+export class ViagensPage implements OnInit {
   // Lista de viagens passadas e atual da usuária
   tripsList: Trip[] = [];
 
@@ -43,7 +43,7 @@ export class MyTripsPage implements OnInit {
 
   // Navega de volta ao mapa, passando o ID da viagem como parâmetro de rota (Requisito 4 e 5)
   goToMapForTrip(tripId: string) {
-    this.router.navigate(['/tabs/map'], {
+    this.router.navigate(['/tabs/mapa'], {
       queryParams: { tripId: tripId }
     });
   }

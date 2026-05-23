@@ -1,20 +1,17 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
 import { IonicModule } from '@ionic/angular';
-
-import { FinancesPageRoutingModule } from './finances-routing.module';
-
-import { FinancesPage } from './finances.page';
+import { MapaPageRoutingModule } from './mapa-routing.module';
+import { MapaPage } from './mapa.page';
 
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
     IonicModule,
-    FinancesPageRoutingModule
+    MapaPageRoutingModule
   ],
-  declarations: [FinancesPage]
+  declarations: [MapaPage]
 })
-export class FinancesPageModule {}
+export class MapaPageModule {}

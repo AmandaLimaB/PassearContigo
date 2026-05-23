@@ -2,31 +2,31 @@ import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { TabsPage } from './tabs.page';
 
-// Definição das rotas filhas para cada aba da aplicação (Requisito 3 e 4)
+// Definição das rotas filhas em português para suportar Angular Lazy Loading de cada módulo (Requisito 7)
 const routes: Routes = [
   {
     path: '',
     component: TabsPage,
     children: [
       {
-        path: 'map',
-        loadChildren: () => import('../pages/map/map.module').then(m => m.MapPageModule)
+        path: 'mapa',
+        loadChildren: () => import('../pages/mapa/mapa.module').then(m => m.MapaPageModule)
       },
       {
-        path: 'my-trips',
-        loadChildren: () => import('../pages/my-trips/my-trips.module').then(m => m.MyTripsPageModule)
+        path: 'viagens',
+        loadChildren: () => import('../pages/viagens/viagens.module').then(m => m.ViagensPageModule)
       },
       {
-        path: 'finances',
-        loadChildren: () => import('../pages/finances/finances.module').then(m => m.FinancesPageModule)
+        path: 'financas',
+        loadChildren: () => import('../pages/financas/financas.module').then(m => m.FinancasPageModule)
       },
       {
-        path: 'profile',
-        loadChildren: () => import('../pages/profile/profile.module').then(m => m.ProfilePageModule)
+        path: 'perfil',
+        loadChildren: () => import('../pages/perfil/perfil.module').then(m => m.PerfilPageModule)
       },
       {
         path: '',
-        redirectTo: 'map',
+        redirectTo: 'mapa',
         pathMatch: 'full'
       }
     ]

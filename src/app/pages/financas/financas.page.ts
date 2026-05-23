@@ -11,12 +11,12 @@ export interface CategoryTotal {
 }
 
 @Component({
-  selector: 'app-finances',
-  templateUrl: './finances.page.html',
-  styleUrls: ['./finances.page.scss'],
+  selector: 'app-financas',
+  templateUrl: './financas.page.html',
+  styleUrls: ['./financas.page.scss'],
   standalone: false,
 })
-export class FinancesPage implements OnInit {
+export class FinancasPage implements OnInit {
   // Lista de despesas financeiras registradas
   expensesList: Expense[] = [];
   
@@ -75,7 +75,7 @@ export class FinancesPage implements OnInit {
 
   // Ao clicar em uma despesa recente, redireciona o usuário para o mapa destacando o local (Requisito 4 e 5)
   viewOnMap(locationName: string) {
-    this.router.navigate(['/tabs/map'], {
+    this.router.navigate(['/tabs/mapa'], {
       queryParams: { location: locationName }
     });
   }
