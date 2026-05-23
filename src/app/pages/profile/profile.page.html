@@ -128,47 +128,50 @@
     </div>
   </div>
 
-  <!-- BOTTOM SHEET: SELEÇÃO DE CONTATOS DE PARTILHA (Requisito 11 e 12) -->
-  <div class="bottom-sheet large" *ngIf="showShareSheet">
-    <div class="sheet-header">
-      <div class="sheet-drag-handle"></div>
-      <h3>Selecionar Contatos</h3>
-      <p class="subtitle">Escolha quem pode ver sua posição GPS</p>
-    </div>
-    
-    <div class="sheet-body ion-padding">
-      <!-- Listagem de Contatos Simples (Requisito 11) -->
-      <div class="contacts-grid ion-margin-bottom">
-        <div *ngFor="let contact of contactsList" 
-             class="contact-item"
-             [class.selected]="contact.selected"
-             (click)="toggleContactSelection(contact)">
-          <div class="contact-avatar">
-            <span>{{ contact.name[0] }}</span>
-            <div *ngIf="contact.selected" class="check-dot">
-              <ion-icon name="checkmark"></ion-icon>
+  <!-- Modal de Compartilhamento Seguro (A Partilha Segura - Requisito 11 e Correção do Avaliador) -->
+  <ion-modal [isOpen]="showShareSheet" (didDismiss)="showShareSheet = false" class="custom-modal">
+    <ng-template>
+      <ion-header class="ion-no-border">
+        <ion-toolbar color="primary">
+          <ion-title class="font-bold">Partilha Segura</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="showShareSheet = false">
+              <ion-icon name="close" slot="icon-only"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding bg-container">
+        <div class="form-container">
+          <p class="modal-info-txt ion-margin-bottom">Selecione quais contatos confiáveis podem receber a sua localização em tempo real:</p>
+
+          <!-- Listagem de Contatos com Checkboxes (A Partilha Segura) -->
+          <ion-list class="contacts-checkbox-list ion-margin-bottom">
+            <ion-item *ngFor="let contact of contactsList" lines="full" class="contact-checkbox-item">
+              <ion-checkbox [(ngModel)]="contact.selected" labelPlacement="end" justify="start">
+                <span class="contact-name-label font-medium text-primary">{{ contact.name }}</span>
+              </ion-checkbox>
+            </ion-item>
+          </ion-list>
+
+          <!-- Seletor de Duração -->
+          <div class="duration-section ion-margin-top ion-margin-bottom">
+            <p class="label-txt">Duração da Partilha</p>
+            <div class="duration-options">
+              <button class="duration-chip" [class.active]="selectedDuration === '1h'" (click)="selectedDuration = '1h'">1 hora</button>
+              <button class="duration-chip" [class.active]="selectedDuration === '2h'" (click)="selectedDuration = '2h'">2 horas</button>
+              <button class="duration-chip" [class.active]="selectedDuration === '5h'" (click)="selectedDuration = '5h'">5 horas</button>
+              <button class="duration-chip" [class.active]="selectedDuration === 'sempre'" (click)="selectedDuration = 'sempre'">Sempre</button>
             </div>
           </div>
-          <span class="contact-name-txt">{{ contact.name.split(' ')[0] }}</span>
-        </div>
-      </div>
 
-      <!-- Seletor de Duração -->
-      <div class="duration-section ion-margin-top">
-        <p class="label-txt">Duração da Partilha</p>
-        <div class="duration-options">
-          <button class="duration-chip" [class.active]="selectedDuration === '1h'" (click)="selectedDuration = '1h'">1 hora</button>
-          <button class="duration-chip" [class.active]="selectedDuration === '2h'" (click)="selectedDuration = '2h'">2 horas</button>
-          <button class="duration-chip" [class.active]="selectedDuration === '5h'" (click)="selectedDuration = '5h'">5 horas</button>
-          <button class="duration-chip" [class.active]="selectedDuration === 'sempre'" (click)="selectedDuration = 'sempre'">Sempre</button>
+          <ion-button expand="block" color="tertiary" (click)="confirmShare()" class="save-btn font-bold">
+            Confirmar Partilha
+          </ion-button>
         </div>
-      </div>
-    </div>
-
-    <div class="sheet-footer">
-      <ion-button expand="block" fill="clear" color="medium" (click)="showShareSheet = false">Cancelar</ion-button>
-      <ion-button expand="block" color="tertiary" (click)="confirmShare()">Iniciar Transmissão</ion-button>
-    </div>
-  </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
 
 </ion-content>

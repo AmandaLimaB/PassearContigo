@@ -255,142 +255,34 @@
   color: var(--ion-color-danger) !important;
 }
 
-/* BOTTOM SHEET SELECIONAR CONTATOS */
-.bottom-sheet {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-top-left-radius: 24px;
-  border-top-right-radius: 24px;
-  z-index: 100;
-  box-shadow: 0 -8px 32px rgba(10, 31, 68, 0.15);
-  animation: slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  
-  &.large {
-    min-height: 420px;
-  }
-
-  .sheet-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding-top: 10px;
-    padding-bottom: 5px;
-    
-    .sheet-drag-handle {
-      width: 40px;
-      height: 4px;
-      background: rgba(10, 31, 68, 0.15);
-      border-radius: 2px;
-      margin-bottom: 12px;
-    }
-    
-    h3 {
-      margin: 0;
-      color: var(--app-foreground);
-      font-size: 1.15rem;
-      font-weight: 700;
-    }
-
-    .subtitle {
-      margin: 2px 0 0 0;
-      font-size: 0.85rem;
-      color: var(--app-muted-foreground);
-    }
-  }
-
-  .sheet-body {
-    padding-bottom: 0;
-  }
-
-  .sheet-footer {
-    padding: 12px 16px 24px;
-    display: flex;
-    gap: 12px;
-    
-    ion-button {
-      flex: 1;
-      margin: 0;
-      --border-radius: 12px;
-      font-weight: 600;
-    }
-  }
+/* Estilos para o Modal de Partilha de Localização */
+.custom-modal {
+  --height: 80%;
+  --border-radius: 20px 20px 0 0;
+  --box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
 }
 
-/* Grade de Contatos */
-.contacts-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-top: 10px;
+.modal-info-txt {
+  font-size: 0.88rem;
+  color: var(--app-muted-foreground);
+  line-height: 1.4;
+  margin-top: 8px;
+}
+
+.contacts-checkbox-list {
+  background: transparent;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--app-border);
+}
+
+.contact-checkbox-item {
+  --background: #ffffff;
+  --color: var(--app-foreground);
   
-  .contact-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    
-    &.selected {
-      .contact-avatar {
-        border-color: var(--ion-color-tertiary);
-        background: var(--ion-color-secondary);
-      }
-      
-      .contact-name-txt {
-        color: var(--ion-color-tertiary);
-        font-weight: 600;
-      }
-    }
-
-    .contact-avatar {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      background: var(--app-muted);
-      border: 2px solid var(--app-border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      transition: all 0.2s ease;
-      
-      span {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: var(--app-foreground);
-      }
-      
-      .check-dot {
-        position: absolute;
-        bottom: -2px;
-        right: -2px;
-        background: var(--ion-color-tertiary);
-        border: 2px solid #ffffff;
-        border-radius: 50%;
-        width: 18px;
-        height: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        
-        ion-icon {
-          font-size: 0.75rem;
-          color: #ffffff;
-          font-weight: 950;
-        }
-      }
-    }
-
-    .contact-name-txt {
-      font-size: 0.72rem;
-      color: var(--app-muted-foreground);
-      text-align: center;
-    }
+  .contact-name-label {
+    font-size: 0.95rem;
+    font-weight: 600;
   }
 }
 
@@ -431,6 +323,14 @@
   }
 }
 
+.save-btn {
+  --border-radius: 12px;
+  --padding-top: 14px;
+  --padding-bottom: 14px;
+  margin-top: 16px;
+  font-size: 0.95rem;
+}
+
 .pulsing-dot {
   width: 8px;
   height: 8px;
@@ -463,3 +363,4 @@
     transform: translateY(0);
   }
 }
+
