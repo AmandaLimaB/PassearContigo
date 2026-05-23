@@ -59,6 +59,64 @@
 
       </ion-card-content>
     </ion-card>
-  </div>
+  <!-- Botão Flutuante Universal no ecrã de viagens (O Botão Universal) -->
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button (click)="openAddTripModal()" color="tertiary" class="fab-pulse">
+      <ion-icon name="add"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+
+  <!-- Modal para Criar Nova Viagem (Requisito 11) -->
+  <ion-modal [isOpen]="isAddTripModalOpen" (didDismiss)="closeAddTripModal()" class="custom-modal">
+    <ng-template>
+      <ion-header class="ion-no-border">
+        <ion-toolbar color="primary">
+          <ion-title class="font-bold">Nova Viagem</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeAddTripModal()">
+              <ion-icon name="close" slot="icon-only"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding bg-container">
+        <div class="form-container">
+          <!-- Nome do Destino -->
+          <ion-item lines="none" class="custom-input-item ion-margin-bottom">
+            <ion-label position="stacked">Destino / Título</ion-label>
+            <ion-input placeholder="Ex: Serra da Estrela" [(ngModel)]="newTripName"></ion-input>
+          </ion-item>
+
+          <!-- Data de Início -->
+          <ion-item lines="none" class="custom-input-item ion-margin-bottom">
+            <ion-label position="stacked">Data de Início</ion-label>
+            <ion-input placeholder="Ex: 10 Jun 2026" [(ngModel)]="newTripStartDate"></ion-input>
+          </ion-item>
+
+          <!-- Data de Fim -->
+          <ion-item lines="none" class="custom-input-item ion-margin-bottom">
+            <ion-label position="stacked">Data de Término</ion-label>
+            <ion-input placeholder="Ex: 15 Jun 2026" [(ngModel)]="newTripEndDate"></ion-input>
+          </ion-item>
+
+          <!-- Nota / Avaliação inicial -->
+          <div class="rating-selection ion-margin-bottom">
+            <p class="rating-label">Avaliação da Experiência</p>
+            <div class="rating-stars-row">
+              <ion-icon *ngFor="let star of [1,2,3,4,5]"
+                        [name]="newTripRating >= star ? 'star' : 'star-outline'"
+                        (click)="newTripRating = star"
+                        class="form-rating-star"></ion-icon>
+            </div>
+          </div>
+
+          <ion-button expand="block" color="tertiary" (click)="saveNewTrip()" class="save-btn font-bold">
+            Gravar Viagem
+          </ion-button>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
 
 </ion-content>

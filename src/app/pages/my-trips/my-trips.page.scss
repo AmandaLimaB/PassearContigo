@@ -104,3 +104,94 @@
     font-size: 1.1rem;
   }
 }
+
+/* Animação do botão flutuante fab-pulse */
+.fab-pulse {
+  --box-shadow: 0 4px 16px rgba(25, 118, 210, 0.35);
+  animation: fab-glow 2.5s infinite;
+}
+
+@keyframes fab-glow {
+  0% {
+    box-shadow: 0 4px 16px rgba(25, 118, 210, 0.35);
+  }
+  50% {
+    box-shadow: 0 4px 24px rgba(25, 118, 210, 0.6);
+  }
+  100% {
+    box-shadow: 0 4px 16px rgba(25, 118, 210, 0.35);
+  }
+}
+
+/* Estilos para o Modal de Criação de Viagem */
+.custom-modal {
+  --height: 80%;
+  --border-radius: 20px 20px 0 0;
+  --box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.form-container {
+  padding-top: 10px;
+}
+
+.custom-input-item {
+  --background: #ffffff;
+  --border-radius: 12px;
+  border: 1px solid var(--app-border);
+  padding: 4px 12px;
+  
+  ion-label {
+    color: var(--app-muted-foreground);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  ion-input {
+    color: var(--app-foreground);
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+}
+
+.rating-selection {
+  background: #ffffff;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  
+  .rating-label {
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--app-muted-foreground);
+  }
+
+  .rating-stars-row {
+    display: flex;
+    gap: 12px;
+  }
+
+  .form-rating-star {
+    font-size: 2rem;
+    color: #ffc409;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+    
+    &:active {
+      transform: scale(1.2);
+    }
+  }
+}
+
+.save-btn {
+  --border-radius: 12px;
+  --padding-top: 14px;
+  --padding-bottom: 14px;
+  margin-top: 16px;
+  font-size: 0.95rem;
+}
+
