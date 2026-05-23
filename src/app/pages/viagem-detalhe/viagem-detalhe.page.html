@@ -1,0 +1,15 @@
+<ion-header [translucent]="true" class="ion-no-border">
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/viagens"></ion-back-button>
+    </ion-buttons>
+    <ion-title class="font-bold">Detalhes da Viagem</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="ion-padding bg-container">
+  <div class="details-header ion-margin-bottom">
+    <h2>Detalhes da Viagem {{ tripId }}</h2>
+    <p>Aqui você pode ver os detalhes específicos da viagem selecionada usando os parâmetros de rota do Angular Router.</p>
+  </div>
+</ion-content>

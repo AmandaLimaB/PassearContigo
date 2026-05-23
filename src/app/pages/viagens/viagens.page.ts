@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { ToastController } from '@ionic/angular';
+import { ToastController, LoadingController } from '@ionic/angular';
 import { DataService, Trip } from '../../services/data.service';
 
 @Component({
@@ -25,7 +25,8 @@ export class ViagensPage implements OnInit {
   constructor(
     private dataService: DataService,
     private router: Router,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private loadingController: LoadingController
   ) { }
 
   ngOnInit() {
@@ -41,11 +42,9 @@ export class ViagensPage implements OnInit {
     this.tripsList = await this.dataService.getTrips();
   }
 
-  // Navega de volta ao mapa, passando o ID da viagem como parâmetro de rota (Requisito 4 e 5)
-  goToMapForTrip(tripId: string) {
-    this.router.navigate(['/tabs/mapa'], {
-      queryParams: { tripId: tripId }
-    });
+  // Navega para os detalhes da viagem, passando o ID da viagem como parâmetro de rota (Requisito 4 e 5)
+  goToTripDetails(tripId: string) {
+    this.router.navigate(['/tabs/viagem-detalhe', tripId]);
   }
 
   // Abre o modal de adição de nova viagem
@@ -66,6 +65,12 @@ export class ViagensPage implements OnInit {
       return;
     }
 
+    const loading = await this.loadingController.create({
+      message: 'A criar nova viagem...',
+      spinner: 'circles'
+    });
+    await loading.present();
+
     const newTrip: Trip = {
       id: Date.now().toString(),
       name: this.newTripName,
@@ -79,6 +84,7 @@ export class ViagensPage implements OnInit {
     await this.dataService.saveTrip(newTrip);
     await this.loadTrips();
     
+    await loading.dismiss();
     // Dispara toast de sucesso (O Feedback)
     await this.presentToast('Nova viagem criada com absoluto sucesso!');
     this.closeAddTripModal();

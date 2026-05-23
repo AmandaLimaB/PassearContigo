@@ -14,7 +14,7 @@
   <!-- Listagem de Viagens (Requisito 8 e 11) -->
   <div class="trips-list">
     <ion-card *ngFor="let trip of tripsList" 
-              (click)="goToMapForTrip(trip.id)" 
+              (click)="goToTripDetails(trip.id)" 
               class="trip-card ion-no-margin ion-margin-bottom ripple-active">
       
       <ion-card-header>

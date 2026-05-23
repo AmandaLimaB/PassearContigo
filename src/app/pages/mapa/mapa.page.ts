@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ToastController } from '@ionic/angular';
+import { ToastController, LoadingController } from '@ionic/angular';
 import { DataService, MapLocation, VisitedLocation, Expense } from '../../services/data.service';
 
 // Definição dos possíveis passos do fluxo de registro de visita
@@ -37,7 +37,8 @@ export class MapaPage implements OnInit {
     private dataService: DataService,
     private route: ActivatedRoute,
     private router: Router,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private loadingController: LoadingController
   ) { }
 
   async ngOnInit() {
@@ -131,6 +132,12 @@ export class MapaPage implements OnInit {
 
   // Simula a captura de fotos do celular, permitindo escolher imagens ilustrativas
   async savePhoto(presetPhoto: string) {
+    const loading = await this.loadingController.create({
+      message: 'A guardar fotografia...',
+      spinner: 'circles'
+    });
+    await loading.present();
+
     this.tempPhotoUrl = presetPhoto;
     
     // Obtém o registro existente deste local para complementar com a foto
@@ -149,7 +156,8 @@ export class MapaPage implements OnInit {
     await this.dataService.saveVisitedLocation(updated);
     await this.loadData();
     
-    await this.presentToast('Fotografia salva com sucesso!');
+    await loading.dismiss();
+    await this.presentToast('Fotografia guardada com sucesso!');
     this.currentStep = 'addRecord';
   }
 
@@ -160,6 +168,12 @@ export class MapaPage implements OnInit {
       return;
     }
     
+    const loading = await this.loadingController.create({
+      message: 'A guardar despesa...',
+      spinner: 'circles'
+    });
+    await loading.present();
+
     const newExpense: Expense = {
       id: Date.now().toString(),
       category: this.tempCostCategory,
@@ -172,7 +186,8 @@ export class MapaPage implements OnInit {
     await this.dataService.saveExpense(newExpense);
     await this.loadData();
     
-    await this.presentToast(`Despesa de €${this.tempCostAmount.toFixed(2)} registrada!`);
+    await loading.dismiss();
+    await this.presentToast(`Despesa de €${this.tempCostAmount.toFixed(2)} guardada!`);
     
     // Limpa campos e retorna ao menu de registros adicionais
     this.tempCostAmount = null;

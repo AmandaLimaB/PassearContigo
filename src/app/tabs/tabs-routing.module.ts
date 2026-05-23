@@ -25,6 +25,10 @@ const routes: Routes = [
         loadChildren: () => import('../pages/perfil/perfil.module').then(m => m.PerfilPageModule)
       },
       {
+        path: 'viagem-detalhe/:id',
+        loadChildren: () => import('../pages/viagem-detalhe/viagem-detalhe.module').then(m => m.ViagemDetalhePageModule)
+      },
+      {
         path: '',
         redirectTo: 'mapa',
         pathMatch: 'full'
