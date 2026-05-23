@@ -34,28 +34,64 @@
       "category": "Entradas/Cultura",
       "amount": 15.0,
       "location": "Santuário de Santa Luzia",
-      "date": "17 Mar 2026"
+      "date": "17 Mar 2026",
+      "tripId": "1"
     },
     {
       "id": "2",
       "category": "Alimentação",
       "amount": 45.5,
       "location": "Ponte de Lima",
-      "date": "16 Mar 2026"
+      "date": "16 Mar 2026",
+      "tripId": "1"
     },
     {
       "id": "3",
       "category": "Transporte",
       "amount": 12.0,
       "location": "Viana do Castelo",
-      "date": "15 Mar 2026"
+      "date": "15 Mar 2026",
+      "tripId": "1"
     },
     {
       "id": "4",
       "category": "Alojamento",
       "amount": 80.0,
       "location": "Braga",
-      "date": "14 Mar 2026"
+      "date": "14 Mar 2026",
+      "tripId": "1"
+    },
+    {
+      "id": "5",
+      "category": "Alimentação",
+      "amount": 65.0,
+      "location": "Albufeira",
+      "date": "18 Jan 2026",
+      "tripId": "3"
+    },
+    {
+      "id": "6",
+      "category": "Alojamento",
+      "amount": 250.0,
+      "location": "Praia da Rocha",
+      "date": "16 Jan 2026",
+      "tripId": "3"
+    },
+    {
+      "id": "7",
+      "category": "Transporte",
+      "amount": 45.0,
+      "location": "Faro",
+      "date": "15 Jan 2026",
+      "tripId": "3"
+    },
+    {
+      "id": "8",
+      "category": "Entradas/Cultura",
+      "amount": 30.0,
+      "location": "Farol do Cabo de São Vicente",
+      "date": "20 Jan 2026",
+      "tripId": "3"
     }
   ],
   "locations": [
@@ -73,6 +109,16 @@
       "name": "Castelo de Viana",
       "lat": 41.6937,
       "lng": -8.8347
+    },
+    {
+      "name": "Praia da Rocha",
+      "lat": 37.1189,
+      "lng": -8.5357
+    },
+    {
+      "name": "Farol do Cabo de São Vicente",
+      "lat": 37.0233,
+      "lng": -8.9964
     }
   ]
 }
