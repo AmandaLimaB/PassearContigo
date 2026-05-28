@@ -2,6 +2,8 @@ import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { TabsPage } from './tabs.page';
 
+import { PerfilGuard } from '../guards/perfil.guard';
+
 // Definição das rotas filhas em português para suportar Angular Lazy Loading de cada módulo (Requisito 7)
 const routes: Routes = [
   {
@@ -18,7 +20,8 @@ const routes: Routes = [
       },
       {
         path: 'financas',
-        loadChildren: () => import('../pages/financas/financas.module').then(m => m.FinancasPageModule)
+        loadChildren: () => import('../pages/financas/financas.module').then(m => m.FinancasPageModule),
+        canActivate: [PerfilGuard]
       },
       {
         path: 'perfil',
