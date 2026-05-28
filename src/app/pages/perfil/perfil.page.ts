@@ -45,6 +45,10 @@ export class PerfilPage implements OnInit {
     await this.loadSharingState();
   }
 
+  async ionViewWillEnter() {
+    await this.dataService.setVisitedPerfil(true);
+  }
+
   // Carrega se a partilha já estava ativa em memória persistente
   async loadSharingState() {
     const storage = (this.dataService as any)._storage;
