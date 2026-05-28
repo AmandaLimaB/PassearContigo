@@ -1,6 +1,207 @@
-.details-header {
+.bg-container {
+  --background: var(--app-muted);
+}
+
+/* Cartão do cabeçalho da viagem com degradê vibrante */
+.trip-detail-header-card {
+  background: linear-gradient(135deg, var(--ion-color-primary) 0%, var(--ion-color-tertiary) 100%);
+  border-radius: 20px;
+  padding: 24px;
+  color: #ffffff;
+  box-shadow: 0 8px 24px rgba(10, 31, 68, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  .trip-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    letter-spacing: -0.5px;
+  }
+
+  .trip-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    opacity: 0.9;
+    
+    ion-icon {
+      font-size: 1.1rem;
+    }
+  }
+}
+
+/* Grade de informações */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+
+  .info-box {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    padding: 12px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+
+    ion-icon {
+      font-size: 1.3rem;
+      margin-bottom: 4px;
+    }
+
+    .box-num {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .stars-row {
+      display: flex;
+      gap: 1px;
+      margin-bottom: 2px;
+      
+      .mini-star-icon {
+        font-size: 0.75rem;
+        margin: 0;
+      }
+    }
+
+    .box-lbl {
+      font-size: 0.7rem;
+      opacity: 0.8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+}
+
+/* Cabeçalhos de secção */
+.section-header {
+  margin: 24px 0 12px 0;
+  
+  h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--app-foreground);
+  }
+}
+
+/* Estado vazio */
+.empty-state-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 24px;
   text-align: center;
-  h2 {
-    color: var(--ion-color-primary);
+  border: 1px solid var(--app-border);
+  color: var(--app-muted-foreground);
+  
+  ion-icon {
+    font-size: 2.2rem;
+    margin-bottom: 8px;
+  }
+  
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+  }
+}
+
+/* Cartões de itens específicos */
+.detail-item-card {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid var(--app-border);
+  box-shadow: 0 4px 12px rgba(10, 31, 68, 0.03);
+  overflow: hidden;
+
+  ion-card-header {
+    padding: 16px;
+    border-bottom: 1px solid rgba(10, 31, 68, 0.05);
+
+    .card-title-group {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      h4 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--app-foreground);
+      }
+
+      .item-rating {
+        display: flex;
+        gap: 2px;
+        
+        ion-icon {
+          font-size: 0.95rem;
+        }
+      }
+    }
+  }
+
+  ion-card-content {
+    padding: 16px;
+
+    .comment-txt {
+      margin: 0;
+      font-size: 0.9rem;
+      color: var(--app-foreground);
+      font-style: italic;
+      line-height: 1.4;
+    }
+    
+    .rounded-photo {
+      width: 100%;
+      max-height: 200px;
+      object-fit: cover;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+  }
+}
+
+/* Lista de Despesas */
+.expenses-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.expense-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid var(--app-border);
+  box-shadow: 0 2px 8px rgba(10, 31, 68, 0.01);
+  
+  .expense-item-left {
+    .expense-item-loc {
+      margin: 0 0 2px 0;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--app-foreground);
+    }
+    
+    .expense-item-meta {
+      margin: 0;
+      font-size: 0.8rem;
+      color: var(--app-muted-foreground);
+    }
+  }
+  
+  .expense-item-right {
+    font-size: 1rem;
+    color: var(--app-foreground);
   }
 }

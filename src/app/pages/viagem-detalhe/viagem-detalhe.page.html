@@ -8,8 +8,99 @@
 </ion-header>
 
 <ion-content [fullscreen]="true" class="ion-padding bg-container">
-  <div class="details-header ion-margin-bottom">
-    <h2>Detalhes da Viagem {{ tripId }}</h2>
-    <p>Aqui você pode ver os detalhes específicos da viagem selecionada usando os parâmetros de rota do Angular Router.</p>
+  
+  <div *ngIf="!trip" class="loading-state ion-text-center ion-padding">
+    <ion-spinner name="crescent" color="primary"></ion-spinner>
+    <p>A carregar detalhes da viagem...</p>
   </div>
+
+  <div *ngIf="trip">
+    <!-- Cabeçalho Principal Premium (Fator WOW) -->
+    <div class="trip-detail-header-card ion-margin-bottom">
+      <h2 class="trip-title">{{ trip.name }}</h2>
+      
+      <!-- Calendário e Duração -->
+      <div class="trip-meta-row">
+        <ion-icon name="calendar-outline"></ion-icon>
+        <span>{{ trip.startDate }} - {{ trip.endDate }}</span>
+      </div>
+
+      <!-- Grade de Informações Gerais -->
+      <div class="info-grid ion-margin-top">
+        <div class="info-box">
+          <ion-icon name="location-outline" color="tertiary"></ion-icon>
+          <span class="box-num">{{ trip.locations }}</span>
+          <span class="box-lbl">Locais</span>
+        </div>
+        <div class="info-box">
+          <ion-icon name="cash-outline" color="tertiary"></ion-icon>
+          <span class="box-num">{{ trip.totalSpent | currency:'EUR':'symbol':'1.2-2':'pt-BR' }}</span>
+          <span class="box-lbl">Gastos</span>
+        </div>
+        <div class="info-box">
+          <ion-icon name="star-outline" color="tertiary"></ion-icon>
+          <div class="stars-row">
+            <ion-icon *ngFor="let idx of getStarsArray(trip.rating)" 
+                      name="star" 
+                      [color]="idx < trip.rating ? 'warning' : 'medium'"
+                      class="mini-star-icon"></ion-icon>
+          </div>
+          <span class="box-lbl">Avaliação</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Locais Visitados nesta Viagem (Requisito 11) -->
+    <div class="section-header">
+      <h3>Locais Desbravados ({{ visitedList.length }})</h3>
+    </div>
+
+    <div *ngIf="visitedList.length === 0" class="empty-state-card ion-margin-bottom">
+      <ion-icon name="map-outline"></ion-icon>
+      <p>Nenhum local marcado nesta viagem ainda.</p>
+    </div>
+
+    <ion-card *ngFor="let loc of visitedList" class="detail-item-card ion-no-margin ion-margin-bottom">
+      <ion-card-header>
+        <div class="card-title-group">
+          <h4>{{ loc.name }}</h4>
+          <div class="item-rating">
+            <ion-icon *ngFor="let idx of getStarsArray(loc.rating || 5)" 
+                      name="star" 
+                      [color]="idx < (loc.rating || 5) ? 'warning' : 'medium'"></ion-icon>
+          </div>
+        </div>
+      </ion-card-header>
+      <ion-card-content>
+        <p class="comment-txt">"{{ loc.comment || 'Local visitado sem comentário registrado.' }}"</p>
+        <div *ngIf="loc.photoUrl" class="photo-preview ion-margin-top">
+          <img [src]="loc.photoUrl" alt="Foto do local" class="rounded-photo" />
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Custos e Finanças desta Viagem (Requisito 11) -->
+    <div class="section-header ion-margin-top">
+      <h3>Despesas da Viagem ({{ expensesList.length }})</h3>
+    </div>
+
+    <div *ngIf="expensesList.length === 0" class="empty-state-card">
+      <ion-icon name="cash-outline"></ion-icon>
+      <p>Nenhuma despesa registrada para esta viagem.</p>
+    </div>
+
+    <div class="expenses-list">
+      <div *ngFor="let expense of expensesList" class="expense-item-row ion-margin-bottom">
+        <div class="expense-item-left">
+          <p class="expense-item-loc">{{ expense.location }}</p>
+          <p class="expense-item-meta">{{ expense.category }} • {{ expense.date }}</p>
+        </div>
+        <div class="expense-item-right font-bold">
+          <span>- {{ expense.amount | currency:'EUR':'symbol':'1.2-2':'pt-BR' }}</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
 </ion-content>
