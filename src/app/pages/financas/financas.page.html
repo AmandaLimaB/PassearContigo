@@ -15,7 +15,7 @@
     <h1 class="summary-value">{{ totalSpent | currency:'EUR':'symbol':'1.2-2':'pt-BR' }}</h1>
     <div class="summary-subtext">
       <ion-icon name="trending-up-outline"></ion-icon>
-      <span>Viagem Atual (Norte de Portugal)</span>
+      <span>Viagem Atual ({{ activeTrip?.name || 'Sem viagem ativa' }})</span>
     </div>
   </div>
 

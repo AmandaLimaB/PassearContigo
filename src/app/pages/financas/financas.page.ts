@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { DataService, Expense } from '../../services/data.service';
+import { DataService, Expense, Trip } from '../../services/data.service';
 
 // Interface auxiliar para os cálculos de despesa por categoria
 export interface CategoryTotal {
@@ -26,6 +26,9 @@ export class FinancasPage implements OnInit {
   // Lista sumarizada por categorias para renderização das barras de progresso
   categoryTotals: CategoryTotal[] = [];
 
+  // Viagem ativa simulada
+  activeTrip: Trip | undefined;
+
   // Mapeamento de cores premium para cada categoria (Requisito 16)
   private categoryColors: Record<string, string> = {
     'Entradas/Cultura': 'var(--app-chart-1)',
@@ -50,7 +53,19 @@ export class FinancasPage implements OnInit {
 
   // Carrega e processa as informações de despesa
   async loadExpensesData() {
-    this.expensesList = await this.dataService.getExpenses();
+    const trips = await this.dataService.getTrips();
+    if (trips.length > 0) {
+      this.activeTrip = trips[0];
+    }
+
+    const allExpenses = await this.dataService.getExpenses();
+    
+    // Filtra as despesas pertencentes à viagem ativa atual
+    if (this.activeTrip) {
+      this.expensesList = allExpenses.filter(e => e.tripId === this.activeTrip?.id);
+    } else {
+      this.expensesList = allExpenses;
+    }
     
     // Calcula o valor total geral gasto
     this.totalSpent = this.expensesList.reduce((sum, exp) => sum + exp.amount, 0);
