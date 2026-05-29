@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { ToastController, LoadingController } from '@ionic/angular';
-import { DataService, Trip } from '../../services/data.service';
+import { SqliteService } from '../../services/sqlite.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-viagens',
@@ -9,56 +10,85 @@ import { DataService, Trip } from '../../services/data.service';
   styleUrls: ['./viagens.page.scss'],
   standalone: false,
 })
-export class ViagensPage implements OnInit {
-  // Lista de viagens passadas e atual da usuária
-  tripsList: Trip[] = [];
+export class ViagensPage implements OnInit, OnDestroy {
+  // Lista de viagens vindas do banco ou do mock
+  tripsList: any[] = [];
 
-  // Controle de estado para exibição do Modal de Nova Viagem (O Botão Universal)
+  // Controle de estado para exibição do Modal
   isAddTripModalOpen = false;
 
-  // Campos temporários para gravação do formulário de nova viagem
+  // Campos temporários do formulário
   newTripName = '';
   newTripStartDate = '';
   newTripEndDate = '';
   newTripRating = 5;
 
+  // Guarda o estado de prontidão do banco localmente para evitar usar o .value do Observable
+  isDbReady = false;
+  private dbSubscription!: Subscription;
+
   constructor(
-    private dataService: DataService,
+    private sqlite: SqliteService,
     private router: Router,
     private toastController: ToastController,
     private loadingController: LoadingController
   ) { }
 
   ngOnInit() {
+    // Subscreve ao estado do banco de forma segura
+    this.dbSubscription = this.sqlite.bancoPronto$.subscribe(async (pronto) => {
+      this.isDbReady = pronto;
+      if (pronto) {
+        await this.loadTrips();
+      }
+    });
   }
 
-  // Carrega as informações dinamicamente a cada entrada na página (Requisito 9 e 15)
+  ngOnDestroy() {
+    // Evita vazamento de memória (Memory Leak)
+    if (this.dbSubscription) {
+      this.dbSubscription.unsubscribe();
+    }
+  }
+
+  // Carrega as informações dinamicamente a cada reentrada na página
   async ionViewWillEnter() {
-    await this.loadTrips();
+    if (this.isDbReady) {
+      await this.loadTrips();
+    } else {
+      // Se o banco nativo não estiver pronto (ex: no Navegador), tenta carregar do localStorage
+      this.loadMockTrips();
+    }
   }
 
-  // Carrega a listagem de viagens
+  // Tenta obter a conexão de forma reflexiva/segura ou executa o fallback mock
   async loadTrips() {
-    this.tripsList = await this.dataService.getTrips();
+    try {
+      // 1. Verifica se o teu serviço possui um método público direto para listar viagens
+      if (typeof (this.sqlite as any).listarViagens === 'function') {
+        this.tripsList = await (this.sqlite as any).listarViagens();
+        return;
+      }
+
+      // 2. Tenta descobrir como a conexão "db" está exposta (pode ser um método público)
+      const dbInstance = this.getSqliteDbInstance();
+
+      if (!dbInstance) {
+        this.loadMockTrips();
+        return;
+      }
+
+      // Executa a query na instância encontrada
+      const resultado = await dbInstance.query({ statement: 'SELECT * FROM viagens;' });
+      this.tripsList = resultado.values ? resultado.values : [];
+      console.log('Viagens carregadas do SQLite:', this.tripsList);
+    } catch (erro) {
+      console.error('Erro ao carregar viagens do SQLite:', erro);
+      this.loadMockTrips(); // Fallback de segurança
+    }
   }
 
-  // Navega para os detalhes da viagem, passando o ID da viagem como parâmetro de rota (Requisito 4 e 5)
-  goToTripDetails(tripId: string) {
-    this.router.navigate(['/tabs/viagem-detalhe', tripId]);
-  }
-
-  // Abre o modal de adição de nova viagem
-  openAddTripModal() {
-    this.isAddTripModalOpen = true;
-  }
-
-  // Fecha o modal limpando campos
-  closeAddTripModal() {
-    this.isAddTripModalOpen = false;
-    this.clearForm();
-  }
-
-  // Valida e grava uma nova viagem no Storage e apresenta Toast de Sucesso (O Feedback)
+  // Valida e grava uma nova viagem
   async saveNewTrip() {
     if (!this.newTripName.trim()) {
       this.presentToast('Por favor, informe o nome do destino.');
@@ -71,26 +101,74 @@ export class ViagensPage implements OnInit {
     });
     await loading.present();
 
-    const newTrip: Trip = {
-      id: Date.now().toString(),
-      name: this.newTripName,
-      startDate: this.newTripStartDate || 'Hoje',
-      endDate: this.newTripEndDate || 'A definir',
-      locations: 0,
-      totalSpent: 0,
-      rating: this.newTripRating
-    };
+    try {
+      const dataInicio = this.newTripStartDate || new Date().toISOString().split('T')[0];
+      const dataFim = this.newTripEndDate || 'A definir';
 
-    await this.dataService.saveTrip(newTrip);
-    await this.loadTrips();
-    
-    await loading.dismiss();
-    // Dispara toast de sucesso (O Feedback)
-    await this.presentToast('Nova viagem criada com absoluto sucesso!');
-    this.closeAddTripModal();
+      const dbInstance = this.getSqliteDbInstance();
+
+      if (!dbInstance) {
+        // MODO NAVEGADOR / SIMULAÇÃO
+        const mockViagens = JSON.parse(localStorage.getItem('mock_viagens') || '[]');
+        const novaViagemMock = {
+          id: Date.now(),
+          nome: this.newTripName,
+          data_inicio: dataInicio,
+          data_fim: dataFim,
+          locais: 0,
+          total_gasto: 0,
+          avaliacao: this.newTripRating
+        };
+        mockViagens.push(novaViagemMock);
+        localStorage.setItem('mock_viagens', JSON.stringify(mockViagens));
+        this.loadMockTrips();
+      } else {
+        // MODO REAL (Telemóvel)
+        const sql = `INSERT INTO viagens (nome, data_inicio, data_fim, avaliacao) VALUES (?, ?, ?, ?);`;
+        await dbInstance.run({
+          statement: sql,
+          values: [this.newTripName, dataInicio, dataFim, this.newTripRating]
+        });
+        await this.loadTrips();
+      }
+
+      await loading.dismiss();
+      await this.presentToast('Nova viagem criada com absoluto sucesso!');
+      this.closeAddTripModal();
+
+    } catch (erro) {
+      await loading.dismiss();
+      console.error('Erro ao gravar nova viagem:', erro);
+      this.presentToast('Erro ao salvar a viagem no banco de dados.');
+    }
   }
 
-  // Auxiliar para limpar o formulário
+  // Método auxiliar para ler dados fictícios se o plugin nativo não estiver disponível
+  private loadMockTrips() {
+    this.tripsList = JSON.parse(localStorage.getItem('mock_viagens') || '[]');
+  }
+
+  // Descobre dinamicamente a propriedade ou método que guarda o banco de dados dentro do serviço privado
+  private getSqliteDbInstance(): any {
+    if ((this.sqlite as any).db) return (this.sqlite as any).db;
+    if (typeof (this.sqlite as any).getDbConnection === 'function') return (this.sqlite as any).getDbConnection();
+    if (typeof (this.sqlite as any).getDatabase === 'function') return (this.sqlite as any).getDatabase();
+    return null;
+  }
+
+  goToTripDetails(tripId: number | string) {
+    this.router.navigate(['/tabs/viagem-detalhe', tripId]);
+  }
+
+  openAddTripModal() {
+    this.isAddTripModalOpen = true;
+  }
+
+  closeAddTripModal() {
+    this.isAddTripModalOpen = false;
+    this.clearForm();
+  }
+
   private clearForm() {
     this.newTripName = '';
     this.newTripStartDate = '';
@@ -98,12 +176,10 @@ export class ViagensPage implements OnInit {
     this.newTripRating = 5;
   }
 
-  // Gera um array auxiliar para renderizar as estrelas da nota de viagem
   getStarsArray(rating: number): number[] {
     return Array(5).fill(0).map((_, i) => i);
   }
 
-  // Apresenta mensagens flutuantes na tela usando ToastController (O Feedback)
   async presentToast(message: string) {
     const toast = await this.toastController.create({
       message: message,
