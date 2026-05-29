@@ -35,3 +35,24 @@
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import "@ionic/angular/css/palettes/dark.system.css";
+
+/* Customização Simples do Alerta */
+.alerta-customizado {
+  --background: #f4f6f9;      /* Cor de fundo do alerta */
+  --backdrop-opacity: 0.6;    /* Escuridão do fundo da tela (0 a 1) */
+  
+  // Customização dos Textos
+  button {
+    color: #1e73be !important; /* Cor do botão (OK) */
+    font-weight: bold !important;
+  }
+
+  h2 {
+    color: #0d2347 !important; /* Cor do Título */
+    font-weight: bold !important;
+  }
+
+  div {
+    color: #4a5568 !important; /* Cor da Mensagem */
+  }
+}
