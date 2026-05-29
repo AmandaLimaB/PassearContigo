@@ -9,12 +9,19 @@
   <!-- Bloco de Identidade do Usuário (Visual Excellence) -->
   <div class="profile-header-card ion-margin-bottom">
     <div class="avatar-and-name">
-      <div class="avatar-circle">
-        <span>MS</span>
+      <!-- Se houver uma imagem em Base64 na base de dados, mostra a foto real -->
+      <div class="avatar-circle" *ngIf="dadosUsuario.imagem_base64">
+        <img [src]="dadosUsuario.imagem_base64" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" alt="Foto de Perfil" />
       </div>
+      
+      <!-- Se não houver foto, gera um círculo padrão com um ícone -->
+      <div class="avatar-circle" *ngIf="!dadosUsuario.imagem_base64">
+        <ion-icon name="person-outline" style="font-size: 24px; color: var(--ion-color-primary);"></ion-icon>
+      </div>
+
       <div class="user-info">
-        <h2>Maria Silva</h2>
-        <p>maria.silva&#64;exemplo.pt</p>
+        <h2>{{ dadosUsuario.nome }}</h2>
+        <p>{{ dadosUsuario.email }}</p>
       </div>
     </div>
     
@@ -85,7 +92,6 @@
           <p class="setting-desc-txt">Impede exibição em landscape via acelerômetro</p>
         </div>
       </div>
-      <!-- Toggle que chama a trava de orientação usando Capacitor -->
       <ion-toggle [(ngModel)]="rotationLocked" (ionChange)="toggleRotationLock()"></ion-toggle>
     </div>
 
@@ -128,7 +134,7 @@
     </div>
   </div>
 
-  <!-- Modal de Compartilhamento Seguro (A Partilha Segura - Requisito 11 e Correção do Avaliador) -->
+  <!-- Modal de Compartilhamento Seguro -->
   <ion-modal [isOpen]="showShareSheet" (didDismiss)="showShareSheet = false" class="custom-modal">
     <ng-template>
       <ion-header class="ion-no-border">
@@ -146,7 +152,7 @@
         <div class="form-container">
           <p class="modal-info-txt ion-margin-bottom">Selecione quais contatos confiáveis podem receber a sua localização em tempo real:</p>
 
-          <!-- Listagem de Contatos com Checkboxes (A Partilha Segura) -->
+          <!-- Listagem de Contatos com Checkboxes -->
           <ion-list class="contacts-checkbox-list ion-margin-bottom">
             <ion-item *ngFor="let contact of contactsList" lines="full" class="contact-checkbox-item">
               <ion-checkbox [(ngModel)]="contact.selected" labelPlacement="end" justify="start">

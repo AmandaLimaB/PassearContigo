@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ToastController } from '@ionic/angular';
 import { ScreenOrientation } from '@capacitor/screen-orientation';
-import { DataService } from '../../services/data.service';
+import { SqliteService } from '../../services/sqlite.service';
 
 @Component({
   selector: 'app-perfil',
@@ -20,6 +20,13 @@ export class PerfilPage implements OnInit {
     duration: '2 horas'
   };
 
+  dadosUsuario: any = {
+    id: null,
+    nome: 'Carregando...',
+    email: '',
+    imagem_base64: ''
+  };
+
   // Estado do bloqueio de rotação do acelerômetro do dispositivo (Requisito 12)
   rotationLocked = true;
 
@@ -35,31 +42,54 @@ export class PerfilPage implements OnInit {
   selectedDuration = '2h';
 
   constructor(
-    private dataService: DataService,
+    private sqlite: SqliteService,
     private toastController: ToastController
   ) { }
 
   async ngOnInit() {
-    // Inicializa o bloqueio de rotação em modo retrato por padrão para cumprir o requisito
     await this.applyRotationLock();
-    await this.loadSharingState();
+    
+    // Aguarda que o SQLite esteja pronto antes de ler os dados
+    this.sqlite.bancoPronto$.subscribe(async (pronto) => {
+      if (pronto) {
+        await this.carregarDadosDoPerfil();
+      }
+    });
+  } // <-- A CHAVETA QUE FALTAVA FECHAR ESTÁ AQUI!
+
+  async carregarDadosDoPerfil() {
+    try {
+      // Vai buscar a lista de utilizadores guardados no SQLite real
+      const utilizadores = await this.sqlite.listarUtilizadores();
+      
+      if (utilizadores && utilizadores.length > 0) {
+        // Para testes, pegamos o primeiro utilizador cadastrado (ex: a Amanda)
+        this.dadosUsuario = utilizadores[0]; 
+        console.log('Dados do perfil carregados do SQLite:', this.dadosUsuario);
+      } else {
+        console.warn('Nenhum utilizador encontrado no banco de dados SQLite.');
+      }
+
+      // Carrega as configurações de partilha simuladas/persistidas
+      await this.loadSharingState();
+
+    } catch (erro) {
+      console.error('Erro ao ler dados do perfil do SQLite:', erro);
+    }
   }
 
   async ionViewWillEnter() {
-    await this.dataService.setVisitedPerfil(true);
+    console.log('Entrou na página de perfil.');
   }
 
-  // Carrega se a partilha já estava ativa em memória persistente
+  // Carrega se a partilha já estava ativa (Simulado via localStorage para evitar crashes)
   async loadSharingState() {
-    const storage = (this.dataService as any)._storage;
-    if (storage) {
-      const isSharing = await storage.get('sharing_active');
-      this.sharingActive = !!isSharing;
-      if (this.sharingActive) {
-        const count = await storage.get('sharing_contacts_count') || 1;
-        const dur = await storage.get('sharing_duration') || '2 horas';
-        this.shareDetails = { contactsCount: count, duration: dur };
-      }
+    const isSharing = localStorage.getItem('sharing_active') === 'true';
+    this.sharingActive = isSharing;
+    if (this.sharingActive) {
+      const count = parseInt(localStorage.getItem('sharing_contacts_count') || '1', 10);
+      const dur = localStorage.getItem('sharing_duration') || '2 horas';
+      this.shareDetails = { contactsCount: count, duration: dur };
     }
   }
 
@@ -68,7 +98,7 @@ export class PerfilPage implements OnInit {
     this.showShareSheet = true;
   }
 
-  // Grava o estado de partilha ativa no Storage e dispara notificações
+  // Grava o estado de partilha ativa e dispara notificações
   async confirmShare() {
     const selectedCount = this.contactsList.filter(c => c.selected).length;
     if (selectedCount === 0) {
@@ -91,13 +121,10 @@ export class PerfilPage implements OnInit {
     
     this.showShareSheet = false;
 
-    // Grava de forma persistente no banco de dados local do Ionic Storage (Requisito 9)
-    const storage = (this.dataService as any)._storage;
-    if (storage) {
-      await storage.set('sharing_active', true);
-      await storage.set('sharing_contacts_count', selectedCount);
-      await storage.set('sharing_duration', this.shareDetails.duration);
-    }
+    // Grava de forma persistente utilizando localStorage padrão para o estado da partilha
+    localStorage.setItem('sharing_active', 'true');
+    localStorage.setItem('sharing_contacts_count', selectedCount.toString());
+    localStorage.setItem('sharing_duration', this.shareDetails.duration);
 
     this.presentToast(`Partilha de localização ativa com ${selectedCount} contato(s)`);
   }
@@ -105,12 +132,7 @@ export class PerfilPage implements OnInit {
   // Desativa e apaga o estado ativo da partilha
   async stopSharing() {
     this.sharingActive = false;
-    
-    const storage = (this.dataService as any)._storage;
-    if (storage) {
-      await storage.set('sharing_active', false);
-    }
-    
+    localStorage.setItem('sharing_active', 'false');
     this.presentToast('Partilha de localização desativada.');
   }
 
@@ -123,14 +145,11 @@ export class PerfilPage implements OnInit {
   private async applyRotationLock() {
     try {
       if (this.rotationLocked) {
-        // Bloqueia em orientação Retrato (Portrait), impedindo Landscape
         await ScreenOrientation.lock({ orientation: 'portrait' });
       } else {
-        // Libera para que o acelerômetro controle livremente a rotação
         await ScreenOrientation.unlock();
       }
     } catch (err) {
-      // Tratamento amigável caso esteja sendo executado em ambiente web de testes
       console.warn('ScreenOrientation indisponível no navegador web (Simulado com sucesso)', err);
     }
   }
