@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { CapacitorSQLite } from 'capacitor-sqlite';
+import { BehaviorSubject, Observable } from 'rxjs'; // <-- IMPORTANTE para gerir o estado assíncrono
 
 @Injectable({
   providedIn: 'root'
@@ -8,14 +9,18 @@ export class SqliteService {
   private sqliteConnection: any;
   private db: any;
   
+  // Subject que avisa a aplicação quando a ligação ao banco de dados está aberta
+  private bancoProntoSubject = new BehaviorSubject<boolean>(false);
+  public bancoPronto$: Observable<boolean> = this.bancoProntoSubject.asObservable();
+  
   constructor() {
-    // Inicializa a ponte nativa do Capacitor com o plugin
     this.sqliteConnection = CapacitorSQLite;
+    // Dispara a inicialização automática ao carregar a app
+    this.inicializarBancoDeDados();
   }
 
   async inicializarBancoDeDados(): Promise<void> {
     try {
-      // Cria ou abre a conexão com os parâmetros corretos exigidos pela nova API
       this.db = await this.sqliteConnection.createConnection({
         database: 'passear_contigo_db',
         encrypted: false,
@@ -25,7 +30,7 @@ export class SqliteService {
 
       await this.db.open();
 
-      // Ativar suporte a Chaves Estrangeiras (Regras de relacionamento)
+      // Ativar suporte a Chaves Estrangeiras
       await this.db.execute({ statements: `PRAGMA foreign_keys = ON;` });
 
       // 1. TABELA PESSOA
@@ -39,7 +44,7 @@ export class SqliteService {
         );
       `;
 
-      // 2. TABELA VIAGENS (Ligada a uma Única Pessoa)
+      // 2. TABELA VIAGENS
       const tabelaViagens = `
         CREATE TABLE IF NOT EXISTS viagens (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -52,7 +57,7 @@ export class SqliteService {
         );
       `;
 
-      // 3. TABELA GASTOS (Ligada a uma Única Viagem)
+      // 3. TABELA GASTOS
       const tabelaGastos = `
         CREATE TABLE IF NOT EXISTS gastos (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -64,7 +69,7 @@ export class SqliteService {
         );
       `;
 
-      // 4. TABELA LOCAIS (Ligada a uma Única Viagem)
+      // 4. TABELA LOCAIS
       const tabelaLocais = `
         CREATE TABLE IF NOT EXISTS locais (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -76,25 +81,32 @@ export class SqliteService {
         );
       `;
 
-      // Executar a criação de todas as tabelas usando a estrutura correta de objetos
+      // Executar a criação de todas as tabelas
       await this.db.execute({ statements: tabelaPessoa });
       await this.db.execute({ statements: tabelaViagens });
       await this.db.execute({ statements: tabelaGastos });
       await this.db.execute({ statements: tabelaLocais });
 
       console.log('Todas as tabelas do projeto foram criadas com sucesso!');
+      
+      // AVISAR A APLICAÇÃO QUE O BANCO ESTÁ PRONTO PARA RECEBER CADASTROS
+      this.bancoProntoSubject.next(true);
+
     } catch (erro) {
       console.error('Erro ao inicializar o banco de dados:', erro);
+      this.bancoProntoSubject.next(false);
     }
   }
 
   // =========================================================================
-  // FUNÇÕES DE INSERÇÃO (INSERT)
+  // FUNÇÕES DE INSERÇÃO (CORRIGIDAS PARA A NOVA API DO CAPACITOR)
   // =========================================================================
 
   async cadastrarPessoa(nome: string, email: string, senha: string, imagemBase64: string): Promise<void> {
     const sql = `INSERT INTO pessoas (nome, email, senha, imagem_base64) VALUES (?, ?, ?, ?);`;
+    // Ajustado para passar a estrutura de parâmetros corretos à API estável
     await this.db.run({ statement: sql, values: [nome, email, senha, imagemBase64] });
+    console.log('Utilizador cadastrado com sucesso no SQLite!');
   }
 
   async cadastrarViagem(local: string, dataIda: string, dataVolta: string, avaliacao: number, pessoaId: number): Promise<void> {
@@ -117,6 +129,7 @@ export class SqliteService {
   // =========================================================================
 
   async listarUtilizadores(): Promise<any[]> {
+    if (!this.db) return [];
     const sql = `SELECT * FROM pessoas;`;
     const resultado = await this.db.query({ statement: sql });
     return resultado.values ? resultado.values : [];
@@ -161,7 +174,6 @@ export class SqliteService {
       WHERE id = ?;
     `;
     await this.db.run({ statement: sql, values: [local, dataIda, dataVolta, avaliacao, id] });
-    console.log(`Viagem com ID ${id} updated!`);
   }
 
   async editarGasto(id: number, data: string, nomeGasto: string, descricao: string): Promise<void> {
@@ -171,7 +183,6 @@ export class SqliteService {
       WHERE id = ?;
     `;
     await this.db.run({ statement: sql, values: [data, nomeGasto, descricao, id] });
-    console.log(`Gasto com ID ${id} atualizado com sucesso!`);
   }
 
   async editarLocal(id: number, nome: string, descricao: string, nota: number): Promise<void> {
@@ -181,6 +192,5 @@ export class SqliteService {
       WHERE id = ?;
     `;
     await this.db.run({ statement: sql, values: [nome, descricao, nota, id] });
-    console.log(`Local com ID ${id} atualizado com sucesso!`);
   }
 }
