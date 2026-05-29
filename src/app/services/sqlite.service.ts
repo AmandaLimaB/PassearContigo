@@ -1,29 +1,32 @@
 import { Injectable } from '@angular/core';
-import { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection } from 'capacitor-sqlite';
+import { CapacitorSQLite } from 'capacitor-sqlite';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SqliteService {
-  private sqliteConnection: SQLiteConnection = new SQLiteConnection(CapacitorSQLite);
-  private db!: SQLiteDBConnection;
-
-  constructor() { }
+  private sqliteConnection: any;
+  private db: any;
+  
+  constructor() {
+    // Inicializa a ponte nativa do Capacitor com o plugin
+    this.sqliteConnection = CapacitorSQLite;
+  }
 
   async inicializarBancoDeDados(): Promise<void> {
     try {
-      this.db = await this.sqliteConnection.createConnection(
-        'passear_contigo_db',
-        false,
-        'no-encryption',
-        1,
-        false
-      );
+      // Cria ou abre a conexão com os parâmetros corretos exigidos pela nova API
+      this.db = await this.sqliteConnection.createConnection({
+        database: 'passear_contigo_db',
+        encrypted: false,
+        mode: 'no-encryption',
+        version: 1
+      });
 
       await this.db.open();
 
       // Ativar suporte a Chaves Estrangeiras (Regras de relacionamento)
-      await this.db.execute(`PRAGMA foreign_keys = ON;`);
+      await this.db.execute({ statements: `PRAGMA foreign_keys = ON;` });
 
       // 1. TABELA PESSOA
       const tabelaPessoa = `
@@ -32,7 +35,7 @@ export class SqliteService {
           nome TEXT NOT NULL,
           email TEXT UNIQUE NOT NULL,
           senha TEXT NOT NULL,
-          imagem_base64 TEXT           -- Guarda a foto da pessoa em formato texto
+          imagem_base64 TEXT
         );
       `;
 
@@ -41,9 +44,9 @@ export class SqliteService {
         CREATE TABLE IF NOT EXISTS viagens (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           local TEXT NOT NULL,
-          data_ida TEXT NOT NULL,      -- SQLite guarda datas como TEXT (ex: '2026-06-15')
+          data_ida TEXT NOT NULL,
           data_volta TEXT NOT NULL,
-          avaliacao INTEGER CHECK(avaliacao >= 1 AND avaliacao <= 5), -- REGRA: Apenas 1 a 5
+          avaliacao INTEGER CHECK(avaliacao >= 1 AND avaliacao <= 5),
           pessoa_id INTEGER NOT NULL,
           FOREIGN KEY (pessoa_id) REFERENCES pessoas(id) ON DELETE CASCADE
         );
@@ -73,11 +76,11 @@ export class SqliteService {
         );
       `;
 
-      // Executar a criação de todas as tabelas
-      await this.db.execute(tabelaPessoa);
-      await this.db.execute(tabelaViagens);
-      await this.db.execute(tabelaGastos);
-      await this.db.execute(tabelaLocais);
+      // Executar a criação de todas as tabelas usando a estrutura correta de objetos
+      await this.db.execute({ statements: tabelaPessoa });
+      await this.db.execute({ statements: tabelaViagens });
+      await this.db.execute({ statements: tabelaGastos });
+      await this.db.execute({ statements: tabelaLocais });
 
       console.log('Todas as tabelas do projeto foram criadas com sucesso!');
     } catch (erro) {
@@ -85,92 +88,99 @@ export class SqliteService {
     }
   }
 
-  // Inserir Pessoa
+  // =========================================================================
+  // FUNÇÕES DE INSERÇÃO (INSERT)
+  // =========================================================================
+
   async cadastrarPessoa(nome: string, email: string, senha: string, imagemBase64: string): Promise<void> {
     const sql = `INSERT INTO pessoas (nome, email, senha, imagem_base64) VALUES (?, ?, ?, ?);`;
-    await this.db.run(sql, [nome, email, senha, imagemBase64]);
+    await this.db.run({ statement: sql, values: [nome, email, senha, imagemBase64] });
   }
 
-  // Inserir Viagem (precisa passar o ID da pessoa dona da viagem)
   async cadastrarViagem(local: string, dataIda: string, dataVolta: string, avaliacao: number, pessoaId: number): Promise<void> {
     const sql = `INSERT INTO viagens (local, data_ida, data_volta, avaliacao, pessoa_id) VALUES (?, ?, ?, ?, ?);`;
-    await this.db.run(sql, [local, dataIda, dataVolta, avaliacao, pessoaId]);
+    await this.db.run({ statement: sql, values: [local, dataIda, dataVolta, avaliacao, pessoaId] });
   }
 
-  // Inserir Gasto (precisa passar o ID da viagem onde o gasto foi feito)
   async cadastrarGasto(data: string, nomeGasto: string, descricao: string, viagemId: number): Promise<void> {
     const sql = `INSERT INTO gastos (data, nome_gasto, descricao, viagem_id) VALUES (?, ?, ?, ?);`;
-    await this.db.run(sql, [data, nomeGasto, descricao, viagemId]);
+    await this.db.run({ statement: sql, values: [data, nomeGasto, descricao, viagemId] });
   }
 
-  // Inserir Local Visitado (precisa passar o ID da viagem)
   async cadastrarLocal(nome: string, descricao: string, nota: number, viagemId: number): Promise<void> {
     const sql = `INSERT INTO locais (nome, descricao, nota, viagem_id) VALUES (?, ?, ?, ?);`;
-    await this.db.run(sql, [nome, descricao, nota, viagemId]);
+    await this.db.run({ statement: sql, values: [nome, descricao, nota, viagemId] });
   }
 
-  // Listar todas as Viagens de uma Pessoa específica
+  // =========================================================================
+  // FUNÇÕES DE CONSULTA (SELECT)
+  // =========================================================================
+
+  async listarUtilizadores(): Promise<any[]> {
+    const sql = `SELECT * FROM pessoas;`;
+    const resultado = await this.db.query({ statement: sql });
+    return resultado.values ? resultado.values : [];
+  }
+
   async listarViagensDaPessoa(pessoaId: number): Promise<any[]> {
     const sql = `SELECT * FROM viagens WHERE pessoa_id = ? ORDER BY data_ida DESC;`;
-    const resultado = await this.db.query(sql, [pessoaId]);
+    const resultado = await this.db.query({ statement: sql, values: [pessoaId] });
     return resultado.values ? resultado.values : [];
   }
 
-  // Listar todos os Gastos de uma Viagem específica
   async listarGastosDaViagem(viagemId: number): Promise<any[]> {
     const sql = `SELECT * FROM gastos WHERE viagem_id = ? ORDER BY data DESC;`;
-    const resultado = await this.db.query(sql, [viagemId]);
+    const resultado = await this.db.query({ statement: sql, values: [viagemId] });
     return resultado.values ? resultado.values : [];
   }
 
-  // Listar todos os Locais de uma Viagem específica
   async listarLocaisDaViagem(viagemId: number): Promise<any[]> {
     const sql = `SELECT * FROM locais WHERE viagem_id = ?;`;
-    const resultado = await this.db.query(sql, [viagemId]);
+    const resultado = await this.db.query({ statement: sql, values: [viagemId] });
     return resultado.values ? resultado.values : [];
   }
 
-  // 1. Editar dados da Pessoa (Nome, Email, Senha ou Foto)
+  // =========================================================================
+  // FUNÇÕES DE EDIÇÃO (UPDATE)
+  // =========================================================================
+
   async editarPessoa(id: number, nome: string, email: string, senha: string, imagemBase64: string): Promise<void> {
     const sql = `
       UPDATE pessoas 
       SET nome = ?, email = ?, senha = ?, imagem_base64 = ? 
       WHERE id = ?;
     `;
-    await this.db.run(sql, [nome, email, senha, imagemBase64, id]);
+    await this.db.run({ statement: sql, values: [nome, email, senha, imagemBase64, id] });
     console.log(`Pessoa com ID ${id} atualizada com sucesso!`);
   }
 
-  // 2. Editar dados de uma Viagem
   async editarViagem(id: number, local: string, dataIda: string, dataVolta: string, avaliacao: number): Promise<void> {
     const sql = `
       UPDATE viagens 
       SET local = ?, data_ida = ?, data_volta = ?, avaliacao = ? 
       WHERE id = ?;
     `;
-    await this.db.run(sql, [local, dataIda, dataVolta, avaliacao, id]);
-    console.log(`Viagem com ID ${id} atualizada com sucesso!`);
+    await this.db.run({ statement: sql, values: [local, dataIda, dataVolta, avaliacao, id] });
+    console.log(`Viagem com ID ${id} updated!`);
   }
 
-  // 3. Editar um Gasto específico
   async editarGasto(id: number, data: string, nomeGasto: string, descricao: string): Promise<void> {
     const sql = `
       UPDATE gastos 
       SET data = ?, nome_gasto = ?, descricao = ? 
       WHERE id = ?;
     `;
-    await this.db.run(sql, [data, nomeGasto, descricao, id]);
+    await this.db.run({ statement: sql, values: [data, nomeGasto, descricao, id] });
     console.log(`Gasto com ID ${id} atualizado com sucesso!`);
   }
 
-  // 4. Editar um Local visitado
   async editarLocal(id: number, nome: string, descricao: string, nota: number): Promise<void> {
     const sql = `
       UPDATE locais 
       SET nome = ?, descricao = ?, nota = ? 
       WHERE id = ?;
     `;
-    await this.db.run(sql, [nome, descricao, nota, id]);
+    await this.db.run({ statement: sql, values: [nome, descricao, nota, id] });
     console.log(`Local com ID ${id} atualizado com sucesso!`);
   }
 }
