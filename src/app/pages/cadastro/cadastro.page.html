@@ -1,0 +1,67 @@
+<ion-header [translucent]="true">
+  <ion-toolbar style="--background: #0d2347; --color: white;">
+    <ion-title class="ion-text-center">PassearContigo</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content style="--background: #f4f6f9;" class="ion-padding">
+  
+  <div style="margin-top: 8%;" class="ion-text-center">
+    <ion-icon [name]="modo === 'login' ? 'lock-closed-outline' : 'person-add-outline'" style="font-size: 70px; color: #0d2347;"></ion-icon>
+    <h2 style="color: #0d2347; font-weight: bold; margin-top: 5px;">
+      {{ modo === 'login' ? 'Iniciar Sessão' : 'Criar Nova Conta' }}
+    </h2>
+  </div>
+
+  <ion-card style="border-radius: 16px; margin-top: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+    <ion-card-content>
+
+      <div *ngIf="modo === 'cadastro'" class="ion-text-center ion-padding-bottom">
+        <div style="width: 90px; height: 90px; border-radius: 50%; background: #e1e8ed; margin: 0 auto; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px solid #1e73be;">
+          <img *ngIf="imagemBase64" [src]="imagemBase64" style="width: 100%; height: 100%; object-fit: cover;" />
+          <ion-icon *ngIf="!imagemBase64" name="person-outline" style="font-size: 35px; color: #a0abba;"></ion-icon>
+        </div>
+        <label for="file-upload" style="display: inline-block; margin-top: 8px; color: #1e73be; font-weight: bold; cursor: pointer; font-size: 0.85em;">
+          Escolher Foto de Perfil
+        </label>
+        <input id="file-upload" type="file" (change)="onFileSelected($event)" accept="image/*" style="display: none;">
+
+        <ion-item lines="none" style="--background: #f4f6f9; border-radius: 10px; margin-top: 15px;">
+          <ion-icon name="person-outline" slot="start" color="primary"></ion-icon>
+          <ion-input type="text" placeholder="Nome Completo" [(ngModel)]="nomeInput" class="input-formulario"></ion-input>
+        </ion-item>
+      </div>
+
+      <ion-item lines="none" style="--background: #f4f6f9; border-radius: 10px; margin-bottom: 12px;">
+        <ion-icon name="mail-outline" slot="start" color="primary"></ion-icon>
+        <ion-input type="email" placeholder="E-mail" [(ngModel)]="emailInput" class="input-formulario"></ion-input>
+      </ion-item>
+
+      <ion-item lines="none" style="--background: #f4f6f9; border-radius: 10px; margin-bottom: 20px;">
+        <ion-icon name="lock-closed-outline" slot="start" color="primary"></ion-icon>
+        <ion-input type="password" placeholder="Senha" [(ngModel)]="senhaInput" class="input-formulario"></ion-input>
+      </ion-item>
+
+      <ion-button *ngIf="modo === 'login'" expand="block" style="--background: #1e73be; --border-radius: 10px; font-weight: bold; height: 45px;" (click)="efetuarLogin()">
+        ENTRAR
+      </ion-button>
+
+      <ion-button *ngIf="modo === 'cadastro'" expand="block" style="--background: #1e73be; --border-radius: 10px; font-weight: bold; height: 45px;" (click)="efetuarCadastro()">
+        CADASTRAR
+      </ion-button>
+
+    </ion-card-content>
+  </ion-card>
+
+  <div class="ion-text-center ion-padding-top">
+    <p *ngIf="modo === 'login'" style="color: #666;">
+      Não tem uma conta? 
+      <a (click)="mudarModo('cadastro')" style="color: #1e73be; font-weight: bold; cursor: pointer;">Registe-se</a>
+    </p>
+    <p *ngIf="modo === 'cadastro'" style="color: #666;">
+      Já tem uma conta? 
+      <a (click)="mudarModo('login')" style="color: #1e73be; font-weight: bold; cursor: pointer;">Faça Login</a>
+    </p>
+  </div>
+
+</ion-content>

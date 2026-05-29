@@ -1,0 +1,108 @@
+import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { SqliteService } from '../../services/sqlite.service';
+import { AlertController } from '@ionic/angular';
+
+@Component({
+  selector: 'app-cadastro',
+  templateUrl: './cadastro.page.html',
+  styleUrls: ['./cadastro.page.scss'],
+})
+export class CadastroPage implements OnInit {
+  // Variável que controla qual formulário aparece na tela ('login' ou 'cadastro')
+  modo: 'login' | 'cadastro' = 'login';
+
+  // Campos partilhados / Login
+  emailInput: string = '';
+  senhaInput: string = '';
+
+  // Campos exclusivos do Cadastro
+  nomeInput: string = '';
+  imagemBase64: string = '';
+  
+
+  constructor(private sqlite: SqliteService, private router: Router, private alertController: AlertController) {}
+
+  ngOnInit() {}
+
+  // Função para alternar entre as telas
+  mudarModo(novoModo: 'login' | 'cadastro') {
+    this.modo = novoModo;
+    // Limpa os campos ao alternar para evitar confusão
+    this.emailInput = '';
+    this.senhaInput = '';
+    this.nomeInput = '';
+    this.imagemBase64 = '';
+  }
+
+  async exibirAlerta(titulo: string, mensagem: string) {
+    const alert = await this.alertController.create({
+      header: titulo,
+      message: mensagem,
+      buttons: ['OK'],
+      cssClass: 'alerta-customizado' // Opcional: para estilizar via CSS depois
+    });
+
+    await alert.present();
+  }
+
+  // Lógica de Login
+  async efetuarLogin() {
+    if (!this.emailInput || !this.senhaInput) {
+      await this.exibirAlerta('Aviso', 'Por favor, preencha o e-mail e a senha!');
+      return;
+    }
+
+    try {
+      const utilizadores = await this.sqlite.listarUtilizadores();
+      const usuarioValido = utilizadores.find(
+        (u) => u.email === this.emailInput && u.senha === this.senhaInput
+      );
+
+      if (usuarioValido) {
+        localStorage.setItem('usuario_logado_id', usuarioValido.id.toString());
+        this.router.navigate(['/perfil']); 
+      } else {
+        await this.exibirAlerta('Aviso', 'Email ou senha incorretos.');
+      }
+    } catch (erro) {
+      console.error(erro);
+      alert('Erro ao aceder ao banco de dados.');
+    }
+  }
+
+  // Lógica de Cadastro
+  async efetuarCadastro() {
+    if (!this.nomeInput || !this.emailInput || !this.senhaInput) {
+      await this.exibirAlerta('Aviso', 'Por favor, preencha todos os dados!');
+      return;
+    }
+
+    try {
+      await this.sqlite.cadastrarPessoa(
+        this.nomeInput,
+        this.emailInput,
+        this.senhaInput,
+        this.imagemBase64
+      );
+      
+      await this.exibirAlerta('Conta criada com sucesso!', 'Faça login agora.');
+      this.mudarModo('login'); // Alterna automaticamente para o formulário de login
+    } catch (erro) {
+      console.error(erro);
+      await this.exibirAlerta('Erro ao cadastrar.', 'O email já pode estar em uso.');
+    }
+  }
+
+  // Processar foto de perfil
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.imagemBase64 = reader.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+}

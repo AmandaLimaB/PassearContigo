@@ -1,0 +1,17 @@
+.input-formulario {
+  // 1. Muda a cor da letra que o utilizador digita
+  color: #0d2347 !important; 
+  font-weight: 500;
+
+  // 2. Customiza a cor do texto de ajuda (Placeholder) antes de ser digitado
+  --placeholder-color: #738294;
+  --placeholder-opacity: 0.8;
+  --placeholder-font-weight: normal;
+}
+
+// Opcional: Se quiseres que o ícone combine com a nova cor do texto quando o campo estiver focado
+ion-item {
+  ion-icon {
+    color: #1e73be; // O azul intermédio dos teus botões
+  }
+}
