@@ -76,6 +76,7 @@ export class SqliteService {
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           data TEXT NOT NULL,
           nome_gasto TEXT NOT NULL,
+          valor REAL NOT NULL DEFAULT 0.0,
           descricao TEXT,
           viagem_id INTEGER NOT NULL,
           FOREIGN KEY (viagem_id) REFERENCES viagens(id) ON DELETE CASCADE
@@ -90,6 +91,7 @@ export class SqliteService {
           descricao TEXT,
           nota INTEGER CHECK(nota >= 1 AND nota <= 5),
           viagem_id INTEGER NOT NULL,
+          foto_url TEXT,
           FOREIGN KEY (viagem_id) REFERENCES viagens(id) ON DELETE CASCADE
         );
       `;
@@ -99,6 +101,20 @@ export class SqliteService {
       await this.db.execute({ statements: tabelaViagens });
       await this.db.execute({ statements: tabelaGastos });
       await this.db.execute({ statements: tabelaLocais });
+
+      // Migração para adicionar a coluna valor caso a base de dados já exista
+      try {
+        await this.db.execute({ statements: 'ALTER TABLE gastos ADD COLUMN valor REAL NOT NULL DEFAULT 0.0;' });
+      } catch (e) {
+        // Ignora erro se a coluna já existir
+      }
+
+      // Migração para adicionar a coluna foto_url caso a base de dados já exista
+      try {
+        await this.db.execute({ statements: 'ALTER TABLE locais ADD COLUMN foto_url TEXT;' });
+      } catch (e) {
+        // Ignora erro se a coluna já existir
+      }
 
       console.log('Todas as tabelas do projeto foram criadas com sucesso!');
       
@@ -169,16 +185,57 @@ export class SqliteService {
     await this.db.run({ statement: sql, values: [local, dataIda, dataVolta, avaliacao, pessoaId] });
   }
 
-  async cadastrarGasto(data: string, nomeGasto: string, descricao: string, viagemId: number): Promise<void> {
+  async cadastrarGasto(data: string, nomeGasto: string, valor: number, descricao: string, viagemId: number): Promise<void> {
     await this.dbReady;
-    const sql = `INSERT INTO gastos (data, nome_gasto, descricao, viagem_id) VALUES (?, ?, ?, ?);`;
-    await this.db.run({ statement: sql, values: [data, nomeGasto, descricao, viagemId] });
+    if (!this.db) {
+      const gastos = JSON.parse(localStorage.getItem('mock_gastos') || '[]');
+      const novoGasto = {
+        id: Date.now(),
+        data,
+        nome_gasto: nomeGasto,
+        categoria: nomeGasto,
+        category: nomeGasto,
+        valor,
+        amount: valor,
+        descricao,
+        local: descricao,
+        location: descricao,
+        viagem_id: viagemId,
+        tripId: viagemId
+      };
+      gastos.push(novoGasto);
+      localStorage.setItem('mock_gastos', JSON.stringify(gastos));
+      return;
+    }
+    const sql = `INSERT INTO gastos (data, nome_gasto, valor, descricao, viagem_id) VALUES (?, ?, ?, ?, ?);`;
+    await this.db.run({ statement: sql, values: [data, nomeGasto, valor, descricao, viagemId] });
   }
 
-  async cadastrarLocal(nome: string, descricao: string, nota: number, viagemId: number): Promise<void> {
+  async cadastrarLocal(nome: string, descricao: string, nota: number, viagemId: number, fotoUrl?: string): Promise<void> {
     await this.dbReady;
-    const sql = `INSERT INTO locais (nome, descricao, nota, viagem_id) VALUES (?, ?, ?, ?);`;
-    await this.db.run({ statement: sql, values: [nome, descricao, nota, viagemId] });
+    if (!this.db) {
+      const locais = JSON.parse(localStorage.getItem('mock_locais') || '[]');
+      const novoLocal = {
+        id: Date.now(),
+        nome,
+        name: nome,
+        descricao: descricao,
+        comment: descricao,
+        comentario: descricao,
+        nota,
+        rating: nota,
+        avaliacao: nota,
+        viagem_id: viagemId,
+        tripId: viagemId,
+        foto_url: fotoUrl || '',
+        photoUrl: fotoUrl || ''
+      };
+      locais.push(novoLocal);
+      localStorage.setItem('mock_locais', JSON.stringify(locais));
+      return;
+    }
+    const sql = `INSERT INTO locais (nome, descricao, nota, viagem_id, foto_url) VALUES (?, ?, ?, ?, ?);`;
+    await this.db.run({ statement: sql, values: [nome, descricao, nota, viagemId, fotoUrl || ''] });
   }
 
   // =========================================================================
@@ -198,6 +255,10 @@ export class SqliteService {
 
   async listarViagensDaPessoa(pessoaId: number): Promise<any[]> {
     await this.dbReady;
+    if (!this.db) {
+      const mockViagens = JSON.parse(localStorage.getItem('mock_viagens') || '[]');
+      return mockViagens.filter((v: any) => !v.pessoa_id || v.pessoa_id.toString() === pessoaId.toString());
+    }
     const sql = `SELECT * FROM viagens WHERE pessoa_id = ? ORDER BY data_ida DESC;`;
     const resultado = await this.db.query({ statement: sql, values: [pessoaId] });
     return resultado.values ? resultado.values : [];
@@ -242,23 +303,47 @@ export class SqliteService {
     await this.db.run({ statement: sql, values: [local, dataIda, dataVolta, avaliacao, id] });
   }
 
-  async editarGasto(id: number, data: string, nomeGasto: string, descricao: string): Promise<void> {
+  async editarGasto(id: number, data: string, nomeGasto: string, valor: number, descricao: string): Promise<void> {
     await this.dbReady;
+    if (!this.db) {
+      const gastos = JSON.parse(localStorage.getItem('mock_gastos') || '[]');
+      const updated = gastos.map((g: any) => g.id === id ? { ...g, data, nome_gasto: nomeGasto, valor, descricao } : g);
+      localStorage.setItem('mock_gastos', JSON.stringify(updated));
+      return;
+    }
     const sql = `
       UPDATE gastos 
-      SET data = ?, nome_gasto = ?, descricao = ? 
+      SET data = ?, nome_gasto = ?, valor = ?, descricao = ? 
       WHERE id = ?;
     `;
-    await this.db.run({ statement: sql, values: [data, nomeGasto, descricao, id] });
+    await this.db.run({ statement: sql, values: [data, nomeGasto, valor, descricao, id] });
   }
 
-  async editarLocal(id: number, nome: string, descricao: string, nota: number): Promise<void> {
+  async editarLocal(id: number, nome: string, descricao: string, nota: number, fotoUrl?: string): Promise<void> {
     await this.dbReady;
+    if (!this.db) {
+      const locais = JSON.parse(localStorage.getItem('mock_locais') || '[]');
+      const updated = locais.map((l: any) => l.id === id ? {
+        ...l,
+        nome,
+        name: nome,
+        descricao,
+        comment: descricao,
+        comentario: descricao,
+        nota,
+        rating: nota,
+        avaliacao: nota,
+        foto_url: fotoUrl || l.foto_url || '',
+        photoUrl: fotoUrl || l.photoUrl || ''
+      } : l);
+      localStorage.setItem('mock_locais', JSON.stringify(updated));
+      return;
+    }
     const sql = `
       UPDATE locais 
-      SET nome = ?, descricao = ?, nota = ? 
+      SET nome = ?, descricao = ?, nota = ?, foto_url = ? 
       WHERE id = ?;
     `;
-    await this.db.run({ statement: sql, values: [nome, descricao, nota, id] });
+    await this.db.run({ statement: sql, values: [nome, descricao, nota, fotoUrl || '', id] });
   }
 }
