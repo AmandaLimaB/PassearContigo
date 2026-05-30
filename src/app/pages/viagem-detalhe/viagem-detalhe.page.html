@@ -15,34 +15,31 @@
   </div>
 
   <div *ngIf="trip">
-    <!-- Cabeçalho Principal Premium (Fator WOW) -->
     <div class="trip-detail-header-card ion-margin-bottom">
-      <h2 class="trip-title">{{ trip.name }}</h2>
+      <h2 class="trip-title">{{ trip.nome }}</h2>
       
-      <!-- Calendário e Duração -->
       <div class="trip-meta-row">
         <ion-icon name="calendar-outline"></ion-icon>
-        <span>{{ trip.startDate }} - {{ trip.endDate }}</span>
+        <span>{{ trip.data_inicio }} - {{ trip.data_fim }}</span>
       </div>
 
-      <!-- Grade de Informações Gerais -->
       <div class="info-grid ion-margin-top">
         <div class="info-box">
           <ion-icon name="location-outline" color="tertiary"></ion-icon>
-          <span class="box-num">{{ trip.locations }}</span>
+          <span class="box-num">{{ trip.locais || 0 }}</span>
           <span class="box-lbl">Locais</span>
         </div>
         <div class="info-box">
           <ion-icon name="cash-outline" color="tertiary"></ion-icon>
-          <span class="box-num">{{ trip.totalSpent | currency:'EUR':'symbol':'1.2-2':'pt-BR' }}</span>
+          <span class="box-num">{{ (trip.total_gasto || 0) | currency:'EUR':'symbol':'1.2-2':'pt-BR' }}</span>
           <span class="box-lbl">Gastos</span>
         </div>
         <div class="info-box">
           <ion-icon name="star-outline" color="tertiary"></ion-icon>
           <div class="stars-row">
-            <ion-icon *ngFor="let idx of getStarsArray(trip.rating)" 
+            <ion-icon *ngFor="let starIdx of getStarsArray(trip.avaliacao); let i = index" 
                       name="star" 
-                      [color]="idx < trip.rating ? 'warning' : 'medium'"
+                      [color]="i < trip.avaliacao ? 'warning' : 'medium'"
                       class="mini-star-icon"></ion-icon>
           </div>
           <span class="box-lbl">Avaliação</span>
@@ -50,7 +47,6 @@
       </div>
     </div>
 
-    <!-- Locais Visitados nesta Viagem (Requisito 11) -->
     <div class="section-header">
       <h3>Locais Desbravados ({{ visitedList.length }})</h3>
     </div>
@@ -63,23 +59,23 @@
     <ion-card *ngFor="let loc of visitedList" class="detail-item-card ion-no-margin ion-margin-bottom">
       <ion-card-header>
         <div class="card-title-group">
-          <h4>{{ loc.name }}</h4>
+          <h4>{{ loc.nome }}</h4>
           <div class="item-rating">
-            <ion-icon *ngFor="let idx of getStarsArray(loc.rating || 5)" 
+            <ion-icon *ngFor="let starIdx of getStarsArray(loc.avaliacao || 5); let i = index" 
                       name="star" 
-                      [color]="idx < (loc.rating || 5) ? 'warning' : 'medium'"></ion-icon>
+                      [color]="i < (loc.avaliacao || 5) ? 'warning' : 'medium'"></ion-icon>
           </div>
         </div>
       </ion-card-header>
       <ion-card-content>
-        <p class="comment-txt">"{{ loc.comment || 'Local visitado sem comentário registrado.' }}"</p>
-        <div *ngIf="loc.photoUrl" class="photo-preview ion-margin-top">
-          <img [src]="loc.photoUrl" alt="Foto do local" class="rounded-photo" />
+        <p class="comment-txt">"{{ loc.comentario || loc.comment || loc.descricao || 'Local visitado sem comentário registrado.' }}"</p>
+        
+        <div *ngIf="loc.foto_url || loc.photoUrl" class="photo-preview ion-margin-top">
+          <img [src]="loc.foto_url || loc.photoUrl" alt="Foto do local" class="rounded-photo" />
         </div>
       </ion-card-content>
     </ion-card>
 
-    <!-- Custos e Finanças desta Viagem (Requisito 11) -->
     <div class="section-header ion-margin-top">
       <h3>Despesas da Viagem ({{ expensesList.length }})</h3>
     </div>
@@ -92,11 +88,13 @@
     <div class="expenses-list">
       <div *ngFor="let expense of expensesList" class="expense-item-row ion-margin-bottom">
         <div class="expense-item-left">
-          <p class="expense-item-loc">{{ expense.location }}</p>
-          <p class="expense-item-meta">{{ expense.category }} • {{ expense.date }}</p>
+          <p class="expense-item-loc">{{ expense.local || expense.location }}</p>
+          <p class="expense-item-meta">
+            {{ expense.categoria || expense.category }} • {{ expense.data || expense.date }}
+          </p>
         </div>
         <div class="expense-item-right font-bold">
-          <span>- {{ expense.amount | currency:'EUR':'symbol':'1.2-2':'pt-BR' }}</span>
+          <span>- {{ (expense.valor || expense.amount) | currency:'EUR':'symbol':'1.2-2':'pt-BR' }}</span>
         </div>
       </div>
     </div>
