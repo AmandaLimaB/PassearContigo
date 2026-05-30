@@ -50,36 +50,42 @@ export class PerfilPage implements OnInit {
     await this.applyRotationLock();
     
     // Aguarda que o SQLite esteja pronto antes de ler os dados
-    this.sqlite.bancoPronto$.subscribe(async (pronto) => {
-      if (pronto) {
-        await this.carregarDadosDoPerfil();
-      }
+    this.sqlite.bancoPronto$.subscribe(async () => {
+      await this.carregarDadosDoPerfil();
     });
-  } // <-- A CHAVETA QUE FALTAVA FECHAR ESTÁ AQUI!
+  }
 
   async carregarDadosDoPerfil() {
     try {
-      // Vai buscar a lista de utilizadores guardados no SQLite real
+      // Vai buscar a lista de utilizadores (SQLite ou localStorage fallback)
       const utilizadores = await this.sqlite.listarUtilizadores();
       
       if (utilizadores && utilizadores.length > 0) {
-        // Para testes, pegamos o primeiro utilizador cadastrado (ex: a Amanda)
-        this.dadosUsuario = utilizadores[0]; 
-        console.log('Dados do perfil carregados do SQLite:', this.dadosUsuario);
+        const loggedId = localStorage.getItem('usuario_logado_id');
+        let usuario = null;
+        
+        if (loggedId) {
+          usuario = utilizadores.find(u => u.id?.toString() === loggedId);
+        }
+        
+        // Se encontrar o utilizador logado usa-o, caso contrário usa o primeiro como fallback
+        this.dadosUsuario = usuario || utilizadores[0];
+        console.log('Dados do perfil carregados:', this.dadosUsuario);
       } else {
-        console.warn('Nenhum utilizador encontrado no banco de dados SQLite.');
+        console.warn('Nenhum utilizador encontrado no banco de dados.');
       }
 
       // Carrega as configurações de partilha simuladas/persistidas
       await this.loadSharingState();
 
     } catch (erro) {
-      console.error('Erro ao ler dados do perfil do SQLite:', erro);
+      console.error('Erro ao ler dados do perfil:', erro);
     }
   }
 
   async ionViewWillEnter() {
     console.log('Entrou na página de perfil.');
+    await this.carregarDadosDoPerfil();
   }
 
   // Carrega se a partilha já estava ativa (Simulado via localStorage para evitar crashes)
