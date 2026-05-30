@@ -79,6 +79,14 @@ export class CadastroPage implements OnInit {
     }
 
     try {
+      // 1. Verificar se o utilizador já existe antes de tentar cadastrar
+      const usuarioExiste = await this.sqlite.verificarUsuarioExistente(this.emailInput);
+      if (usuarioExiste) {
+        await this.exibirAlerta('Aviso', 'Este e-mail já está registado!');
+        return;
+      }
+
+      // 2. Tentar cadastrar a pessoa na base de dados
       await this.sqlite.cadastrarPessoa(
         this.nomeInput,
         this.emailInput,
@@ -88,9 +96,10 @@ export class CadastroPage implements OnInit {
       
       await this.exibirAlerta('Conta criada com sucesso!', 'Faça login agora.');
       this.mudarModo('login'); // Alterna automaticamente para o formulário de login
-    } catch (erro) {
-      console.error(erro);
-      await this.exibirAlerta('Erro ao cadastrar.', 'O email já pode estar em uso.');
+    } catch (erro: any) {
+      console.error('Erro detalhado no fluxo de registo:', erro);
+      const msg = erro?.message || (typeof erro === 'string' ? erro : JSON.stringify(erro)) || 'Erro desconhecido';
+      await this.exibirAlerta('Erro ao cadastrar.', `Ocorreu um erro ao processar o seu registo. Detalhes: ${msg}`);
     }
   }
 

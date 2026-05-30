@@ -8,6 +8,7 @@ import { BehaviorSubject, Observable } from 'rxjs'; // <-- IMPORTANTE para gerir
 export class SqliteService {
   private sqliteConnection: any;
   private db: any;
+  private dbReady: Promise<void>; // Promise para garantir abertura segura
   
   // Subject que avisa a aplicação quando a ligação ao banco de dados está aberta
   private bancoProntoSubject = new BehaviorSubject<boolean>(false);
@@ -15,18 +16,30 @@ export class SqliteService {
   
   constructor() {
     this.sqliteConnection = CapacitorSQLite;
-    // Dispara a inicialização automática ao carregar a app
-    this.inicializarBancoDeDados();
+    // Dispara a inicialização automática ao carregar a app e guarda a Promise
+    this.dbReady = this.inicializarBancoDeDados();
   }
 
   async inicializarBancoDeDados(): Promise<void> {
     try {
-      this.db = await this.sqliteConnection.createConnection({
-        database: 'passear_contigo_db',
-        encrypted: false,
-        mode: 'no-encryption',
-        version: 1
-      });
+      try {
+        this.db = await this.sqliteConnection.createConnection({
+          database: 'passear_contigo_db',
+          encrypted: false,
+          mode: 'no-encryption',
+          version: 1
+        });
+      } catch (err: any) {
+        console.warn('Conexão inicial falhou ou já existe. Tentando recuperar/reutilizar:', err);
+        try {
+          this.db = await this.sqliteConnection.retrieveConnection({
+            database: 'passear_contigo_db'
+          });
+        } catch (retrieveErr) {
+          console.error('Falha crítica ao inicializar/recuperar a base de dados:', retrieveErr);
+          throw retrieveErr;
+        }
+      }
 
       await this.db.open();
 
@@ -103,23 +116,67 @@ export class SqliteService {
   // =========================================================================
 
   async cadastrarPessoa(nome: string, email: string, senha: string, imagemBase64: string): Promise<void> {
-    const sql = `INSERT INTO pessoas (nome, email, senha, imagem_base64) VALUES (?, ?, ?, ?);`;
-    // Ajustado para passar a estrutura de parâmetros corretos à API estável
-    await this.db.run({ statement: sql, values: [nome, email, senha, imagemBase64] });
-    console.log('Utilizador cadastrado com sucesso no SQLite!');
+    await this.dbReady;
+    if (!this.db) {
+      // Fallback web / mock usando localStorage
+      const pessoas = JSON.parse(localStorage.getItem('mock_pessoas') || '[]');
+      const novaPessoa = {
+        id: Date.now(),
+        nome,
+        email,
+        senha,
+        imagem_base64: imagemBase64
+      };
+      pessoas.push(novaPessoa);
+      localStorage.setItem('mock_pessoas', JSON.stringify(pessoas));
+      console.log('Utilizador cadastrado com sucesso no localStorage (Mock)!');
+      return;
+    }
+    try {
+      const sql = `INSERT INTO pessoas (nome, email, senha, imagem_base64) VALUES (?, ?, ?, ?);`;
+      await this.db.run({ statement: sql, values: [nome, email, senha, imagemBase64] });
+      console.log('Utilizador cadastrado com sucesso no SQLite!');
+    } catch (erro) {
+      console.error('Erro de SQLite ao cadastrar pessoa (INSERT):', erro);
+      throw erro;
+    }
+  }
+
+  async verificarUsuarioExistente(email: string): Promise<boolean> {
+    await this.dbReady;
+    if (!this.db) {
+      // Fallback web / mock usando localStorage
+      const pessoas = JSON.parse(localStorage.getItem('mock_pessoas') || '[]');
+      return pessoas.some((p: any) => p.email === email);
+    }
+    try {
+      const sql = `SELECT * FROM pessoas WHERE email = ?;`;
+      const res = await this.db.query({ statement: sql, values: [email] });
+      // Valida corretamente se o array de resultados está vazio e se res.values existe
+      if (res.values && res.values.length > 0) {
+        return true;
+      }
+      return false;
+    } catch (erro) {
+      console.error('Erro de SQLite ao verificar existência de utilizador (SELECT):', erro);
+      throw erro;
+    }
   }
 
   async cadastrarViagem(local: string, dataIda: string, dataVolta: string, avaliacao: number, pessoaId: number): Promise<void> {
+    await this.dbReady;
     const sql = `INSERT INTO viagens (local, data_ida, data_volta, avaliacao, pessoa_id) VALUES (?, ?, ?, ?, ?);`;
     await this.db.run({ statement: sql, values: [local, dataIda, dataVolta, avaliacao, pessoaId] });
   }
 
   async cadastrarGasto(data: string, nomeGasto: string, descricao: string, viagemId: number): Promise<void> {
+    await this.dbReady;
     const sql = `INSERT INTO gastos (data, nome_gasto, descricao, viagem_id) VALUES (?, ?, ?, ?);`;
     await this.db.run({ statement: sql, values: [data, nomeGasto, descricao, viagemId] });
   }
 
   async cadastrarLocal(nome: string, descricao: string, nota: number, viagemId: number): Promise<void> {
+    await this.dbReady;
     const sql = `INSERT INTO locais (nome, descricao, nota, viagem_id) VALUES (?, ?, ?, ?);`;
     await this.db.run({ statement: sql, values: [nome, descricao, nota, viagemId] });
   }
@@ -129,25 +186,32 @@ export class SqliteService {
   // =========================================================================
 
   async listarUtilizadores(): Promise<any[]> {
-    if (!this.db) return [];
+    await this.dbReady;
+    if (!this.db) {
+      // Fallback web / mock usando localStorage
+      return JSON.parse(localStorage.getItem('mock_pessoas') || '[]');
+    }
     const sql = `SELECT * FROM pessoas;`;
     const resultado = await this.db.query({ statement: sql });
     return resultado.values ? resultado.values : [];
   }
 
   async listarViagensDaPessoa(pessoaId: number): Promise<any[]> {
+    await this.dbReady;
     const sql = `SELECT * FROM viagens WHERE pessoa_id = ? ORDER BY data_ida DESC;`;
     const resultado = await this.db.query({ statement: sql, values: [pessoaId] });
     return resultado.values ? resultado.values : [];
   }
 
   async listarGastosDaViagem(viagemId: number): Promise<any[]> {
+    await this.dbReady;
     const sql = `SELECT * FROM gastos WHERE viagem_id = ? ORDER BY data DESC;`;
     const resultado = await this.db.query({ statement: sql, values: [viagemId] });
     return resultado.values ? resultado.values : [];
   }
 
   async listarLocaisDaViagem(viagemId: number): Promise<any[]> {
+    await this.dbReady;
     const sql = `SELECT * FROM locais WHERE viagem_id = ?;`;
     const resultado = await this.db.query({ statement: sql, values: [viagemId] });
     return resultado.values ? resultado.values : [];
@@ -158,6 +222,7 @@ export class SqliteService {
   // =========================================================================
 
   async editarPessoa(id: number, nome: string, email: string, senha: string, imagemBase64: string): Promise<void> {
+    await this.dbReady;
     const sql = `
       UPDATE pessoas 
       SET nome = ?, email = ?, senha = ?, imagem_base64 = ? 
@@ -168,6 +233,7 @@ export class SqliteService {
   }
 
   async editarViagem(id: number, local: string, dataIda: string, dataVolta: string, avaliacao: number): Promise<void> {
+    await this.dbReady;
     const sql = `
       UPDATE viagens 
       SET local = ?, data_ida = ?, data_volta = ?, avaliacao = ? 
@@ -177,6 +243,7 @@ export class SqliteService {
   }
 
   async editarGasto(id: number, data: string, nomeGasto: string, descricao: string): Promise<void> {
+    await this.dbReady;
     const sql = `
       UPDATE gastos 
       SET data = ?, nome_gasto = ?, descricao = ? 
@@ -186,6 +253,7 @@ export class SqliteService {
   }
 
   async editarLocal(id: number, nome: string, descricao: string, nota: number): Promise<void> {
+    await this.dbReady;
     const sql = `
       UPDATE locais 
       SET nome = ?, descricao = ?, nota = ? 
