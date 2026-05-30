@@ -10,35 +10,20 @@ import { SqliteService } from '../../services/sqlite.service';
   standalone: false,
 })
 export class PerfilPage implements OnInit {
-  // Controle do estado da partilha de localização em tempo real
   sharingActive = false;
   showShareSheet = false;
-  
-  // Detalhes da partilha ativa
-  shareDetails = {
-    contactsCount: 0,
-    duration: '2 horas'
-  };
+  shareDetails = { contactsCount: 0, duration: '2 horas' };
 
-  dadosUsuario: any = {
-    id: null,
-    nome: 'Carregando...',
-    email: '',
-    imagem_base64: ''
-  };
-
-  // Estado do bloqueio de rotação do acelerômetro do dispositivo (Requisito 12)
+  dadosUsuario: any = { id: null, nome: 'Carregando...', email: '', imagem_base64: '' };
+  estatisticas = { viagens: 0, locais: 0, paises: 0 };
   rotationLocked = true;
 
-  // Lista simulada de contatos confiáveis da usuária
   contactsList = [
     { id: '1', name: 'Ana Souza (Mãe)', selected: false },
     { id: '2', name: 'Carlos Lima (Namorado)', selected: false },
     { id: '3', name: 'Julia Martins (Irmã)', selected: false },
     { id: '4', name: 'Pedro Alves (Amigo)', selected: false }
   ];
-
-  // Tempo de duração escolhido para a partilha
   selectedDuration = '2h';
 
   constructor(
@@ -48,47 +33,74 @@ export class PerfilPage implements OnInit {
 
   async ngOnInit() {
     await this.applyRotationLock();
-    
-    // Aguarda que o SQLite esteja pronto antes de ler os dados
     this.sqlite.bancoPronto$.subscribe(async () => {
       await this.carregarDadosDoPerfil();
     });
   }
 
+  async ionViewWillEnter() {
+    await this.carregarDadosDoPerfil();
+  }
+
   async carregarDadosDoPerfil() {
     try {
-      // Vai buscar a lista de utilizadores (SQLite ou localStorage fallback)
       const utilizadores = await this.sqlite.listarUtilizadores();
-      
+
       if (utilizadores && utilizadores.length > 0) {
         const loggedId = localStorage.getItem('usuario_logado_id');
         let usuario = null;
-        
         if (loggedId) {
-          usuario = utilizadores.find(u => u.id?.toString() === loggedId);
+          usuario = utilizadores.find((u: any) => u.id?.toString() === loggedId);
         }
-        
-        // Se encontrar o utilizador logado usa-o, caso contrário usa o primeiro como fallback
         this.dadosUsuario = usuario || utilizadores[0];
-        console.log('Dados do perfil carregados:', this.dadosUsuario);
-      } else {
-        console.warn('Nenhum utilizador encontrado no banco de dados.');
       }
 
-      // Carrega as configurações de partilha simuladas/persistidas
+      await this.atualizarEstatisticas();
       await this.loadSharingState();
-
     } catch (erro) {
       console.error('Erro ao ler dados do perfil:', erro);
     }
   }
 
-  async ionViewWillEnter() {
-    console.log('Entrou na página de perfil.');
-    await this.carregarDadosDoPerfil();
+  async atualizarEstatisticas() {
+    try {
+      const dbInstance = (this.sqlite as any).db;
+      const loggedId = localStorage.getItem('usuario_logado_id');
+      const pessoaId = loggedId ? parseInt(loggedId, 10) : 1;
+
+      if (dbInstance) {
+        const viagens = await this.sqlite.listarViagensDaPessoa(pessoaId);
+        let totalLocais = 0;
+        for (const v of viagens) {
+          const res = await dbInstance.query({ statement: 'SELECT COUNT(*) as count FROM locais WHERE viagem_id = ?;', values: [v.id] });
+          totalLocais += res.values?.[0]?.count || 0;
+        }
+        this.estatisticas = {
+          viagens: viagens.length,
+          locais: totalLocais,
+          paises: Math.max(1, viagens.length > 0 ? 1 : 0)
+        };
+      } else {
+        // Modo mock: lê do localStorage
+        const mockViagens = JSON.parse(localStorage.getItem('mock_viagens') || '[]');
+        const mockLocais = JSON.parse(localStorage.getItem('mock_locais') || '[]');
+
+        const viagensIds = mockViagens.map((v: any) => v.id.toString());
+        const totalLocais = mockLocais.filter((l: any) =>
+          viagensIds.includes(l.viagem_id?.toString()) || viagensIds.includes(l.tripId?.toString())
+        ).length;
+
+        this.estatisticas = {
+          viagens: mockViagens.length,
+          locais: totalLocais,
+          paises: Math.max(1, mockViagens.length > 0 ? 1 : 0)
+        };
+      }
+    } catch (e) {
+      console.error('Erro ao atualizar estatísticas do perfil:', e);
+    }
   }
 
-  // Carrega se a partilha já estava ativa (Simulado via localStorage para evitar crashes)
   async loadSharingState() {
     const isSharing = localStorage.getItem('sharing_active') === 'true';
     this.sharingActive = isSharing;
@@ -99,55 +111,32 @@ export class PerfilPage implements OnInit {
     }
   }
 
-  // Ativa a exibição do Bottom Sheet de compartilhamento de localização
-  activateShareMode() {
-    this.showShareSheet = true;
-  }
+  activateShareMode() { this.showShareSheet = true; }
 
-  // Grava o estado de partilha ativa e dispara notificações
   async confirmShare() {
     const selectedCount = this.contactsList.filter(c => c.selected).length;
     if (selectedCount === 0) {
       this.presentToast('Por favor, selecione ao menos um contato de confiança.');
       return;
     }
-
-    const durationMap: Record<string, string> = {
-      '1h': '1 hora',
-      '2h': '2 horas',
-      '5h': '5 horas',
-      'sempre': 'Até eu desligar'
-    };
-
+    const durationMap: Record<string, string> = { '1h': '1 hora', '2h': '2 horas', '5h': '5 horas', 'sempre': 'Até eu desligar' };
     this.sharingActive = true;
-    this.shareDetails = {
-      contactsCount: selectedCount,
-      duration: durationMap[this.selectedDuration] || '2 horas'
-    };
-    
+    this.shareDetails = { contactsCount: selectedCount, duration: durationMap[this.selectedDuration] || '2 horas' };
     this.showShareSheet = false;
-
-    // Grava de forma persistente utilizando localStorage padrão para o estado da partilha
     localStorage.setItem('sharing_active', 'true');
     localStorage.setItem('sharing_contacts_count', selectedCount.toString());
     localStorage.setItem('sharing_duration', this.shareDetails.duration);
-
     this.presentToast(`Partilha de localização ativa com ${selectedCount} contato(s)`);
   }
 
-  // Desativa e apaga o estado ativo da partilha
   async stopSharing() {
     this.sharingActive = false;
     localStorage.setItem('sharing_active', 'false');
     this.presentToast('Partilha de localização desativada.');
   }
 
-  // Alterna o bloqueio de rotação pelo acelerômetro usando Capacitor (Requisito 12)
-  async toggleRotationLock() {
-    await this.applyRotationLock();
-  }
+  async toggleRotationLock() { await this.applyRotationLock(); }
 
-  // Aplica o bloqueio Portrait/Retrato ou destrava o acelerômetro usando plugins do Capacitor (Requisito 12)
   private async applyRotationLock() {
     try {
       if (this.rotationLocked) {
@@ -156,22 +145,14 @@ export class PerfilPage implements OnInit {
         await ScreenOrientation.unlock();
       }
     } catch (err) {
-      console.warn('ScreenOrientation indisponível no navegador web (Simulado com sucesso)', err);
+      console.warn('ScreenOrientation indisponível no navegador web', err);
     }
   }
 
-  // Auxiliar para a seleção de contatos no Bottom Sheet
-  toggleContactSelection(contact: any) {
-    contact.selected = !contact.selected;
-  }
+  toggleContactSelection(contact: any) { contact.selected = !contact.selected; }
 
-  // Auxiliar para exibição de toasts
   async presentToast(message: string) {
-    const toast = await this.toastController.create({
-      message: message,
-      duration: 2000,
-      position: 'bottom'
-    });
+    const toast = await this.toastController.create({ message, duration: 2000, position: 'bottom' });
     await toast.present();
   }
 }
