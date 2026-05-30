@@ -61,13 +61,14 @@ export class CadastroPage implements OnInit {
 
       if (usuarioValido) {
         localStorage.setItem('usuario_logado_id', usuarioValido.id.toString());
-        this.router.navigate(['/perfil']); 
+        this.router.navigate(['/tabs/perfil']); 
       } else {
         await this.exibirAlerta('Aviso', 'Email ou senha incorretos.');
       }
-    } catch (erro) {
-      console.error(erro);
-      alert('Erro ao aceder ao banco de dados.');
+    } catch (erro: any) {
+      console.error('Erro detalhado no login:', erro);
+      const msg = erro?.message || (typeof erro === 'string' ? erro : JSON.stringify(erro)) || 'Erro desconhecido';
+      await this.exibirAlerta('Erro ao iniciar sessão.', `Ocorreu um erro ao aceder à base de dados. Detalhes: ${msg}`);
     }
   }
 
