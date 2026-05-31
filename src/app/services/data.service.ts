@@ -3,8 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Storage } from '@ionic/storage-angular';
 import { firstValueFrom, Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { SqliteService } from './sqlite.service';
 
-// Interface que define o formato de uma Viagem
 export interface Trip {
   id: string;
   name: string;
@@ -15,7 +15,6 @@ export interface Trip {
   rating: number;
 }
 
-// Interface que define o formato de uma Despesa
 export interface Expense {
   id: string;
   category: string;
@@ -25,7 +24,6 @@ export interface Expense {
   tripId?: string;
 }
 
-// Interface que define o formato de um Local Visitado/Mapa
 export interface VisitedLocation {
   id: string;
   name: string;
@@ -36,12 +34,43 @@ export interface VisitedLocation {
   tripId?: string;
 }
 
-// Interface que define o formato dos locais no mapa
 export interface MapLocation {
   name: string;
   lat: number;
   lng: number;
 }
+
+const DEFAULT_LOCAIS = [
+  { id: 'v1', nome: 'Santuário de Santa Luzia', name: 'Santuário de Santa Luzia', hasRecord: true, rating: 5, avaliacao: 5, nota: 5, comentario: 'Vista inacreditável sobre o rio Lima e o oceano. Uma das basílicas mais belas de Portugal!', comment: 'Vista inacreditável sobre o rio Lima e o oceano. Uma das basílicas mais belas de Portugal!', descricao: 'Vista inacreditável sobre o rio Lima e o oceano. Uma das basílicas mais belas de Portugal!', viagem_id: 1, tripId: 1, foto_url: '', photoUrl: '' },
+  { id: 'v2', nome: 'Ponte de Lima', name: 'Ponte de Lima', hasRecord: true, rating: 4, avaliacao: 4, nota: 4, comentario: 'A vila mais antiga de Portugal, a ponte romana é espetacular. Comida maravilhosa!', comment: 'A vila mais antiga de Portugal, a ponte romana é espetacular. Comida maravilhosa!', descricao: 'A vila mais antiga de Portugal, a ponte romana é espetacular. Comida maravilhosa!', viagem_id: 1, tripId: 1, foto_url: '', photoUrl: '' },
+  { id: 'v3', nome: 'Praia da Rocha', name: 'Praia da Rocha', hasRecord: true, rating: 5, avaliacao: 5, nota: 5, comentario: 'Falésias de cor dourada e areal incrível. Recomendo imenso caminhar no passadiço ao pôr do sol!', comment: 'Falésias de cor dourada e areal incrível. Recomendo imenso caminhar no passadiço ao pôr do sol!', descricao: 'Falésias de cor dourada e areal incrível. Recomendo imenso caminhar no passadiço ao pôr do sol!', viagem_id: 3, tripId: 3, foto_url: '', photoUrl: '' },
+  { id: 'v4', nome: 'Farol do Cabo de São Vicente', name: 'Farol do Cabo de São Vicente', hasRecord: true, rating: 5, avaliacao: 5, nota: 5, comentario: 'O fim do mundo do Algarve. Pôr do sol mágico e um vento revigorante!', comment: 'O fim do mundo do Algarve. Pôr do sol mágico e um vento revigorante!', descricao: 'O fim do mundo do Algarve. Pôr do sol mágico e um vento revigorante!', viagem_id: 3, tripId: 3, foto_url: '', photoUrl: '' }
+];
+
+const DEFAULT_GASTOS = [
+  { id: 1, categoria: 'Entradas/Cultura', category: 'Entradas/Cultura', nome_gasto: 'Entradas/Cultura', valor: 15.0, amount: 15.0, descricao: 'Santuário de Santa Luzia', local: 'Santuário de Santa Luzia', location: 'Santuário de Santa Luzia', data: '17 Mar 2026', date: '17 Mar 2026', viagem_id: 1, tripId: 1 },
+  { id: 2, categoria: 'Alimentação', category: 'Alimentação', nome_gasto: 'Alimentação', valor: 45.5, amount: 45.5, descricao: 'Ponte de Lima', local: 'Ponte de Lima', location: 'Ponte de Lima', data: '16 Mar 2026', date: '16 Mar 2026', viagem_id: 1, tripId: 1 },
+  { id: 3, categoria: 'Transporte', category: 'Transporte', nome_gasto: 'Transporte', valor: 12.0, amount: 12.0, descricao: 'Viana do Castelo', local: 'Viana do Castelo', location: 'Viana do Castelo', data: '15 Mar 2026', date: '15 Mar 2026', viagem_id: 1, tripId: 1 },
+  { id: 4, categoria: 'Alojamento', category: 'Alojamento', nome_gasto: 'Alojamento', valor: 80.0, amount: 80.0, descricao: 'Braga', local: 'Braga', location: 'Braga', data: '14 Mar 2026', date: '14 Mar 2026', viagem_id: 1, tripId: 1 },
+  { id: 5, categoria: 'Alimentação', category: 'Alimentação', nome_gasto: 'Alimentação', valor: 65.0, amount: 65.0, descricao: 'Albufeira', local: 'Albufeira', location: 'Albufeira', data: '18 Jan 2026', date: '18 Jan 2026', viagem_id: 3, tripId: 3 },
+  { id: 6, categoria: 'Alojamento', category: 'Alojamento', nome_gasto: 'Alojamento', valor: 250.0, amount: 250.0, descricao: 'Praia da Rocha', local: 'Praia da Rocha', location: 'Praia da Rocha', data: '16 Jan 2026', date: '16 Jan 2026', viagem_id: 3, tripId: 3 },
+  { id: 7, categoria: 'Transporte', category: 'Transporte', nome_gasto: 'Transporte', valor: 45.0, amount: 45.0, descricao: 'Faro', local: 'Faro', location: 'Faro', data: '15 Jan 2026', date: '15 Jan 2026', viagem_id: 3, tripId: 3 },
+  { id: 8, categoria: 'Entradas/Cultura', category: 'Entradas/Cultura', nome_gasto: 'Entradas/Cultura', valor: 30.0, amount: 30.0, descricao: 'Farol do Cabo de São Vicente', local: 'Farol do Cabo de São Vicente', location: 'Farol do Cabo de São Vicente', data: '20 Jan 2026', date: '20 Jan 2026', viagem_id: 3, tripId: 3 }
+];
+
+const DEFAULT_VIAGENS = [
+  { id: 1, nome: 'Norte de Portugal', data_inicio: '10 Mar 2026', data_fim: '17 Mar 2026', avaliacao: 5, pessoa_id: 1 },
+  { id: 2, nome: 'Lisboa e Sintra', data_inicio: '01 Fev 2026', data_fim: '05 Fev 2026', avaliacao: 4, pessoa_id: 1 },
+  { id: 3, nome: 'Algarve', data_inicio: '15 Jan 2026', data_fim: '22 Jan 2026', avaliacao: 5, pessoa_id: 1 }
+];
+
+const DEFAULT_MAP_LOCATIONS: MapLocation[] = [
+  { name: 'Santuário de Santa Luzia', lat: 41.6925, lng: -8.8303 },
+  { name: 'Ponte de Lima', lat: 41.7676, lng: -8.5834 },
+  { name: 'Castelo de Viana', lat: 41.6937, lng: -8.8347 },
+  { name: 'Praia da Rocha', lat: 37.1189, lng: -8.5357 },
+  { name: 'Farol do Cabo de São Vicente', lat: 37.0233, lng: -8.9964 }
+];
 
 @Injectable({
   providedIn: 'root'
@@ -49,359 +78,246 @@ export interface MapLocation {
 export class DataService {
   private _storage: Storage | null = null;
   private mockDataPath = 'assets/data/mock.json';
-
-  // Caches em memória para carregamento instantâneo (otimização de performance)
-  private tripsCache: Trip[] | null = null;
-  private expensesCache: Expense[] | null = null;
-  private visitedCache: VisitedLocation[] | null = null;
-
-  // Flag em memória para navegação condicional (Guard de Finanças)
   private hasVisitedPerfilFlag = false;
-
-  // Dados mockados robustos de fallback em caso de falha de carregamento do JSON
-  private defaultMockData = {
-    trips: [
-      {
-        id: "1",
-        name: "Norte de Portugal",
-        startDate: "10 Mar 2026",
-        endDate: "17 Mar 2026",
-        locations: 12,
-        totalSpent: 450.0,
-        rating: 5
-      },
-      {
-        id: "2",
-        name: "Lisboa e Sintra",
-        startDate: "01 Fev 2026",
-        endDate: "05 Fev 2026",
-        locations: 8,
-        totalSpent: 320.0,
-        rating: 4
-      },
-      {
-        id: "3",
-        name: "Algarve",
-        startDate: "15 Jan 2026",
-        endDate: "22 Jan 2026",
-        locations: 15,
-        totalSpent: 580.0,
-        rating: 5
-      }
-    ],
-    expenses: [
-      {
-        id: "1",
-        category: "Entradas/Cultura",
-        amount: 15.0,
-        location: "Santuário de Santa Luzia",
-        date: "17 Mar 2026",
-        tripId: "1"
-      },
-      {
-        id: "2",
-        category: "Alimentação",
-        amount: 45.5,
-        location: "Ponte de Lima",
-        date: "16 Mar 2026",
-        tripId: "1"
-      },
-      {
-        id: "3",
-        category: "Transporte",
-        amount: 12.0,
-        location: "Viana do Castelo",
-        date: "15 Mar 2026",
-        tripId: "1"
-      },
-      {
-        id: "4",
-        category: "Alojamento",
-        amount: 80.0,
-        location: "Braga",
-        date: "14 Mar 2026",
-        tripId: "1"
-      },
-      {
-        id: "5",
-        category: "Alimentação",
-        amount: 65.0,
-        location: "Albufeira",
-        date: "18 Jan 2026",
-        tripId: "3"
-      },
-      {
-        id: "6",
-        category: "Alojamento",
-        amount: 250.0,
-        location: "Praia da Rocha",
-        date: "16 Jan 2026",
-        tripId: "3"
-      },
-      {
-        id: "7",
-        category: "Transporte",
-        amount: 45.0,
-        location: "Faro",
-        date: "15 Jan 2026",
-        tripId: "3"
-      },
-      {
-        id: "8",
-        category: "Entradas/Cultura",
-        amount: 30.0,
-        location: "Farol do Cabo de São Vicente",
-        date: "20 Jan 2026",
-        tripId: "3"
-      }
-    ],
-    locations: [
-      {
-        name: "Santuário de Santa Luzia",
-        lat: 41.6925,
-        lng: -8.8303
-      },
-      {
-        name: "Ponte de Lima",
-        lat: 41.7676,
-        lng: -8.5834
-      },
-      {
-        name: "Castelo de Viana",
-        lat: 41.6937,
-        lng: -8.8347
-      },
-      {
-        name: "Praia da Rocha",
-        lat: 37.1189,
-        lng: -8.5357
-      },
-      {
-        name: "Farol do Cabo de São Vicente",
-        lat: 37.0233,
-        lng: -8.9964
-      }
-    ]
-  };
 
   constructor(
     private http: HttpClient,
-    private storage: Storage
+    private storage: Storage,
+    private sqlite: SqliteService
   ) {
     this.init();
   }
 
-  // Inicializa o banco de dados local do Ionic Storage (Requisito 9)
   async init() {
     if (!this._storage) {
-      const storage = await this.storage.create();
-      this._storage = storage;
+      this._storage = await this.storage.create();
+    }
+    this.ensureMockDataSeeded();
+  }
+
+  private ensureMockDataSeeded() {
+    if (!localStorage.getItem('mock_viagens')) {
+      localStorage.setItem('mock_viagens', JSON.stringify(DEFAULT_VIAGENS));
+    }
+    if (!localStorage.getItem('mock_locais')) {
+      localStorage.setItem('mock_locais', JSON.stringify(DEFAULT_LOCAIS));
+    }
+    if (!localStorage.getItem('mock_gastos')) {
+      localStorage.setItem('mock_gastos', JSON.stringify(DEFAULT_GASTOS));
     }
   }
 
-  // Garante que o storage esteja pronto antes de qualquer operação
-  private async ensureStorageReady() {
-    if (!this._storage) {
-      await this.init();
-    }
-  }
-
-  // Carrega os dados padrão do arquivo JSON (Requisito 10) com tratamento de erro
   private getMockData(): Observable<any> {
     return this.http.get<any>(this.mockDataPath).pipe(
-      catchError(err => {
-        console.warn('Erro ao carregar mock.json via HTTP, usando fallback robusto local', err);
-        return of(this.defaultMockData);
-      })
+      catchError(() => of({ locations: DEFAULT_MAP_LOCATIONS }))
     );
   }
 
-  // Retorna a lista de locais pré-definidos para o mapa
   async getMapLocations(): Promise<MapLocation[]> {
     try {
       const data = await firstValueFrom(this.getMockData());
-      return data.locations || this.defaultMockData.locations;
-    } catch (error) {
-      return this.defaultMockData.locations;
+      return data.locations || DEFAULT_MAP_LOCATIONS;
+    } catch {
+      return DEFAULT_MAP_LOCATIONS;
     }
   }
 
-  // Obtém todas as viagens (mescla com cache em memória para velocidade instantânea)
-  async getTrips(): Promise<Trip[]> {
-    if (this.tripsCache) {
-      return this.tripsCache;
+  // ===========================================================================
+  // VIAGENS
+  // ===========================================================================
+
+  async getTrips(): Promise<any[]> {
+    const dbInstance = (this.sqlite as any).db;
+    if (dbInstance) {
+      const usuarioId = localStorage.getItem('usuario_logado_id');
+      const pessoaId = usuarioId ? parseInt(usuarioId, 10) : 1;
+      const res = await dbInstance.query({
+        statement: 'SELECT * FROM viagens WHERE pessoa_id = ? ORDER BY id DESC;',
+        values: [pessoaId]
+      });
+      return res.values || [];
     }
-    await this.ensureStorageReady();
-    const storedTrips = await this._storage?.get('trips');
-    
-    if (!storedTrips || storedTrips.length === 0) {
-      try {
-        const data = await firstValueFrom(this.getMockData());
-        const initialTrips = data.trips || this.defaultMockData.trips;
-        await this._storage?.set('trips', initialTrips);
-        this.tripsCache = initialTrips;
-        return initialTrips;
-      } catch (error) {
-        this.tripsCache = this.defaultMockData.trips;
-        return this.defaultMockData.trips;
+
+    const viagens = JSON.parse(localStorage.getItem('mock_viagens') || '[]');
+    return viagens;
+  }
+
+  async getTripsWithStats(): Promise<any[]> {
+    const dbInstance = (this.sqlite as any).db;
+    const trips = await this.getTrips();
+
+    return Promise.all(trips.map(async (t: any) => {
+      const tripId = t.id;
+
+      if (dbInstance) {
+        const locaisRes = await dbInstance.query({ statement: 'SELECT COUNT(*) as count FROM locais WHERE viagem_id = ?;', values: [tripId] });
+        const gastosRes = await dbInstance.query({ statement: 'SELECT SUM(valor) as total FROM gastos WHERE viagem_id = ?;', values: [tripId] });
+        return {
+          id: t.id,
+          nome: t.local || t.nome || '',
+          data_inicio: t.data_ida || t.data_inicio || '',
+          data_fim: t.data_volta || t.data_fim || '',
+          avaliacao: t.avaliacao || 5,
+          locais: locaisRes.values?.[0]?.count || 0,
+          total_gasto: gastosRes.values?.[0]?.total || 0
+        };
+      } else {
+        const tripIdStr = tripId.toString();
+        const mockLocais = JSON.parse(localStorage.getItem('mock_locais') || '[]');
+        const mockGastos = JSON.parse(localStorage.getItem('mock_gastos') || '[]');
+        const locaisCount = mockLocais.filter((l: any) => l.viagem_id?.toString() === tripIdStr || l.tripId?.toString() === tripIdStr).length;
+        const totalGasto = mockGastos.filter((g: any) => g.viagem_id?.toString() === tripIdStr || g.tripId?.toString() === tripIdStr)
+          .reduce((sum: number, g: any) => sum + (g.valor || g.amount || 0), 0);
+        return {
+          id: t.id,
+          nome: t.local || t.nome || '',
+          data_inicio: t.data_ida || t.data_inicio || '',
+          data_fim: t.data_volta || t.data_fim || '',
+          avaliacao: t.avaliacao || 5,
+          locais: locaisCount,
+          total_gasto: totalGasto
+        };
       }
+    }));
+  }
+
+  async getActiveTripId(): Promise<number> {
+    const dbInstance = (this.sqlite as any).db;
+    if (dbInstance) {
+      const res = await dbInstance.query({ statement: 'SELECT id FROM viagens ORDER BY id DESC LIMIT 1;' });
+      if (res.values && res.values.length > 0) return res.values[0].id;
+      return 1;
     }
-    this.tripsCache = storedTrips;
-    return storedTrips;
+    const viagens = JSON.parse(localStorage.getItem('mock_viagens') || '[]');
+    if (viagens.length > 0) return viagens[viagens.length - 1].id;
+    return 1;
   }
 
-  // Obtém uma viagem específica pelo ID
-  async getTripById(id: string): Promise<Trip | undefined> {
-    const trips = await this.getTrips();
-    return trips.find(t => t.id === id);
-  }
+  // ===========================================================================
+  // LOCAIS VISITADOS
+  // ===========================================================================
 
-  // Adiciona ou atualiza uma viagem no Storage
-  async saveTrip(trip: Trip): Promise<Trip[]> {
-    await this.ensureStorageReady();
-    const trips = await this.getTrips();
-    const updatedTrips = [trip, ...trips.filter(t => t.id !== trip.id)];
-    await this._storage?.set('trips', updatedTrips);
-    this.tripsCache = updatedTrips;
-    return updatedTrips;
-  }
-
-  // Obtém todas as despesas (utiliza cache para melhor performance)
-  async getExpenses(): Promise<Expense[]> {
-    if (this.expensesCache) {
-      return this.expensesCache;
-    }
-    await this.ensureStorageReady();
-    const storedExpenses = await this._storage?.get('expenses');
-    
-    if (!storedExpenses || storedExpenses.length === 0) {
-      try {
-        const data = await firstValueFrom(this.getMockData());
-        const initialExpenses = data.expenses || this.defaultMockData.expenses;
-        await this._storage?.set('expenses', initialExpenses);
-        this.expensesCache = initialExpenses;
-        return initialExpenses;
-      } catch (error) {
-        this.expensesCache = this.defaultMockData.expenses;
-        return this.defaultMockData.expenses;
-      }
-    }
-    this.expensesCache = storedExpenses;
-    return storedExpenses;
-  }
-
-  // Salva uma despesa no Storage
-  async saveExpense(expense: Expense): Promise<Expense[]> {
-    await this.ensureStorageReady();
-    const expenses = await this.getExpenses();
-    const updatedExpenses = [expense, ...expenses.filter(e => e.id !== expense.id)];
-    await this._storage?.set('expenses', updatedExpenses);
-    this.expensesCache = updatedExpenses;
-    
-    // Atualiza também o total gasto na viagem à qual esta despesa pertence
-    if (expense.tripId) {
-      await this.updateTripExpenses(expense.tripId, expense.amount);
-    } else {
-      await this.updateTripExpenses("1", expense.amount); // Fallback para viagem 1
-    }
-    
-    return updatedExpenses;
-  }
-
-  // Adiciona o valor gasto a uma viagem específica
-  private async updateTripExpenses(tripId: string, amount: number) {
-    const trips = await this.getTrips();
-    const matchedTrip = trips.find(t => t.id === tripId);
-    if (matchedTrip) {
-      matchedTrip.totalSpent += amount;
-      await this._storage?.set('trips', trips);
-      this.tripsCache = trips;
-    }
-  }
-
-  // Obtém todos os registros de locais visitados (persiste fotos, comentários, etc.)
   async getVisitedLocations(): Promise<VisitedLocation[]> {
-    if (this.visitedCache) {
-      return this.visitedCache;
-    }
-    await this.ensureStorageReady();
-    const stored = await this._storage?.get('visited_locations');
-    if (!stored || stored.length === 0) {
-      const initialVisited = [
-        {
-          id: "v1",
-          name: "Santuário de Santa Luzia",
-          hasRecord: true,
-          rating: 5,
-          comment: "Vista inacreditável sobre o rio Lima e o oceano. Uma das basílicas mais belas de Portugal!",
-          tripId: "1"
-        },
-        {
-          id: "v2",
-          name: "Ponte de Lima",
-          hasRecord: true,
-          rating: 4,
-          comment: "A vila mais antiga de Portugal, a ponte romana é espetacular. Comida maravilhosa!",
-          tripId: "1"
-        },
-        {
-          id: "v3",
-          name: "Praia da Rocha",
-          hasRecord: true,
-          rating: 5,
-          comment: "Falésias de cor dourada e areal incrível. Recomendo imenso caminhar no passadiço ao pôr do sol!",
-          tripId: "3"
-        },
-        {
-          id: "v4",
-          name: "Farol do Cabo de São Vicente",
-          hasRecord: true,
-          rating: 5,
-          comment: "O fim do mundo do Algarve. Pôr do sol mágico e um vento revigorante!",
-          tripId: "3"
-        }
-      ];
-      await this._storage?.set('visited_locations', initialVisited);
-      this.visitedCache = initialVisited;
-      return initialVisited;
-    }
-    this.visitedCache = stored;
-    return stored;
+    const mockLocais = JSON.parse(localStorage.getItem('mock_locais') || '[]');
+    return mockLocais.map((l: any) => ({
+      id: l.id?.toString() || '',
+      name: l.nome || l.name || '',
+      hasRecord: true,
+      rating: l.rating || l.avaliacao || l.nota || 5,
+      comment: l.comment || l.comentario || l.descricao || '',
+      photoUrl: l.photoUrl || l.foto_url || '',
+      tripId: l.tripId?.toString() || l.viagem_id?.toString() || '1'
+    }));
   }
 
-  // Salva o feedback/registro de visita de um determinado local no mapa
-  async saveVisitedLocation(visited: VisitedLocation): Promise<VisitedLocation[]> {
-    await this.ensureStorageReady();
-    const visitedList = await this.getVisitedLocations();
-    const updatedList = [
-      ...visitedList.filter(loc => loc.name !== visited.name),
-      visited
-    ];
-    await this._storage?.set('visited_locations', updatedList);
-    this.visitedCache = updatedList;
-    
-    // Incrementa também o número de locais visitados na viagem ativa para atualizar a UI
-    const trips = await this.getTrips();
-    const tripId = visited.tripId || "1";
-    const matchedTrip = trips.find(t => t.id === tripId);
-    if (matchedTrip && !visitedList.some(loc => loc.name === visited.name && loc.hasRecord)) {
-      matchedTrip.locations += 1;
-      await this._storage?.set('trips', trips);
-      this.tripsCache = trips;
+  async saveVisitedLocation(visited: VisitedLocation): Promise<void> {
+    const activeTripId = await this.getActiveTripId();
+    const rating = visited.rating || 5;
+    const comment = visited.comment || '';
+    const photoUrl = visited.photoUrl || '';
+
+    const dbInstance = (this.sqlite as any).db;
+    if (dbInstance) {
+      const existing = await dbInstance.query({
+        statement: 'SELECT id FROM locais WHERE nome = ? AND viagem_id = ?;',
+        values: [visited.name, activeTripId]
+      });
+      if (existing.values && existing.values.length > 0) {
+        await dbInstance.run({
+          statement: 'UPDATE locais SET nota = ?, descricao = ?, foto_url = ? WHERE id = ?;',
+          values: [rating, comment, photoUrl, existing.values[0].id]
+        });
+      } else {
+        await this.sqlite.cadastrarLocal(visited.name, comment, rating, activeTripId, photoUrl);
+      }
     }
-    
-    return updatedList;
+
+    // Sempre persiste no localStorage para que todas as páginas leiam
+    const locais = JSON.parse(localStorage.getItem('mock_locais') || '[]');
+    const existingIdx = locais.findIndex((l: any) =>
+      (l.nome === visited.name || l.name === visited.name) &&
+      (l.viagem_id?.toString() === activeTripId.toString() || l.tripId?.toString() === activeTripId.toString())
+    );
+
+    const novoLocal = {
+      id: existingIdx > -1 ? locais[existingIdx].id : Date.now(),
+      nome: visited.name,
+      name: visited.name,
+      descricao: comment,
+      comment: comment,
+      comentario: comment,
+      nota: rating,
+      rating: rating,
+      avaliacao: rating,
+      viagem_id: activeTripId,
+      tripId: activeTripId,
+      foto_url: photoUrl,
+      photoUrl: photoUrl,
+      hasRecord: true
+    };
+
+    if (existingIdx > -1) {
+      locais[existingIdx] = novoLocal;
+    } else {
+      locais.push(novoLocal);
+    }
+    localStorage.setItem('mock_locais', JSON.stringify(locais));
   }
 
-  // Métodos do Guard para controlar a navegação baseada no Perfil
+  // ===========================================================================
+  // DESPESAS
+  // ===========================================================================
+
+  async getExpenses(): Promise<any[]> {
+    return JSON.parse(localStorage.getItem('mock_gastos') || '[]');
+  }
+
+  async saveExpense(expense: Expense): Promise<void> {
+    const activeTripId = await this.getActiveTripId();
+
+    const dbInstance = (this.sqlite as any).db;
+    if (dbInstance) {
+      await this.sqlite.cadastrarGasto(
+        expense.date || new Date().toISOString().split('T')[0],
+        expense.category,
+        expense.amount,
+        expense.location,
+        activeTripId
+      );
+    }
+
+    // Sempre persiste no localStorage
+    const gastos = JSON.parse(localStorage.getItem('mock_gastos') || '[]');
+    gastos.push({
+      id: Date.now(),
+      data: expense.date || new Date().toISOString().split('T')[0],
+      date: expense.date || new Date().toISOString().split('T')[0],
+      nome_gasto: expense.category,
+      categoria: expense.category,
+      category: expense.category,
+      valor: expense.amount,
+      amount: expense.amount,
+      descricao: expense.location,
+      local: expense.location,
+      location: expense.location,
+      viagem_id: activeTripId,
+      tripId: activeTripId
+    });
+    localStorage.setItem('mock_gastos', JSON.stringify(gastos));
+  }
+
+  // ===========================================================================
+  // GUARD DE PERFIL
+  // ===========================================================================
+
   async hasVisitedPerfil(): Promise<boolean> {
-    await this.ensureStorageReady();
+    if (!this._storage) await this.init();
     const visited = await this._storage?.get('visited_perfil');
     return !!visited || this.hasVisitedPerfilFlag;
   }
 
   async setVisitedPerfil(value: boolean): Promise<void> {
-    await this.ensureStorageReady();
+    if (!this._storage) await this.init();
     await this._storage?.set('visited_perfil', value);
     this.hasVisitedPerfilFlag = value;
   }
