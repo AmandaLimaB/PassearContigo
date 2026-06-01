@@ -50,7 +50,45 @@ export class ViagensPage implements OnInit, OnDestroy {
 
   async loadTrips() {
     try {
-      this.tripsList = await this.dataService.getTripsWithStats();
+      const loggedId = localStorage.getItem('usuario_logado_id');
+      const pessoaId = loggedId ? parseInt(loggedId, 10) : 1;
+
+      const viagensCruas = await this.sqlite.listarViagensDaPessoa(pessoaId);
+      const dbInstance = (this.sqlite as any).db;
+
+      this.tripsList = await Promise.all(viagensCruas.map(async (v: any) => {
+        const tripId = v.id;
+
+        if (dbInstance) {
+          const locaisRes = await dbInstance.query({ statement: 'SELECT COUNT(*) as count FROM locais WHERE viagem_id = ?;', values: [tripId] });
+          const gastosRes = await dbInstance.query({ statement: 'SELECT SUM(valor) as total FROM gastos WHERE viagem_id = ?;', values: [tripId] });
+          return {
+            id: v.id,
+            nome: v.local || v.nome || '',
+            data_inicio: v.data_ida || v.data_inicio || '',
+            data_fim: v.data_volta || v.data_fim || '',
+            avaliacao: v.avaliacao || 5,
+            locais: locaisRes.values?.[0]?.count || 0,
+            total_gasto: gastosRes.values?.[0]?.total || 0
+          };
+        } else {
+          const tripIdStr = tripId.toString();
+          const mockLocais = JSON.parse(localStorage.getItem('mock_locais') || '[]');
+          const mockGastos = JSON.parse(localStorage.getItem('mock_gastos') || '[]');
+          const locaisCount = mockLocais.filter((l: any) => l.viagem_id?.toString() === tripIdStr || l.tripId?.toString() === tripIdStr).length;
+          const totalGasto = mockGastos.filter((g: any) => g.viagem_id?.toString() === tripIdStr || g.tripId?.toString() === tripIdStr)
+            .reduce((sum: number, g: any) => sum + (g.valor || g.amount || 0), 0);
+          return {
+            id: v.id,
+            nome: v.nome || v.local || '',
+            data_inicio: v.data_inicio || v.data_ida || '',
+            data_fim: v.data_fim || v.data_volta || '',
+            avaliacao: v.avaliacao || 5,
+            locais: locaisCount,
+            total_gasto: totalGasto
+          };
+        }
+      }));
     } catch (erro) {
       console.error('Erro ao carregar viagens:', erro);
     }
