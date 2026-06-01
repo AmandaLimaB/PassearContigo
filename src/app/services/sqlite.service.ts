@@ -257,7 +257,7 @@ export class SqliteService {
     await this.dbReady;
     if (!this.db) {
       const mockViagens = JSON.parse(localStorage.getItem('mock_viagens') || '[]');
-      return mockViagens.filter((v: any) => !v.pessoa_id || v.pessoa_id.toString() === pessoaId.toString());
+      return mockViagens.filter((v: any) => v.pessoa_id?.toString() === pessoaId.toString());
     }
     const sql = `SELECT * FROM viagens WHERE pessoa_id = ? ORDER BY data_ida DESC;`;
     const resultado = await this.db.query({ statement: sql, values: [pessoaId] });
