@@ -51,48 +51,63 @@ export class FinancasPage implements OnInit, OnDestroy {
 
   async loadExpensesData() {
     try {
+      const loggedId = localStorage.getItem('usuario_logado_id');
+      const pessoaId = loggedId ? parseInt(loggedId, 10) : 1;
+
       const dbInstance = (this.sqlite as any).db;
 
       if (dbInstance) {
-        const tripRes = await dbInstance.query({ statement: 'SELECT * FROM viagens ORDER BY id DESC LIMIT 1;' });
+        const tripRes = await dbInstance.query({ 
+          statement: 'SELECT * FROM viagens WHERE pessoa_id = ? ORDER BY id DESC LIMIT 1;',
+          values: [pessoaId]
+        });
         if (tripRes.values && tripRes.values.length > 0) {
           const t = tripRes.values[0];
           this.activeTrip = { id: t.id, nome: t.local || t.nome || '' };
         }
 
-        const query = this.activeTrip
-          ? 'SELECT * FROM gastos WHERE viagem_id = ?;'
-          : 'SELECT * FROM gastos;';
-        const values = this.activeTrip ? [this.activeTrip.id] : [];
-
-        const expensesRes = await dbInstance.query({ statement: query, values });
-        this.expensesList = (expensesRes.values || []).map((e: any) => ({
-          ...e,
-          categoria: e.nome_gasto || e.categoria || '',
-          category: e.nome_gasto || e.categoria || '',
-          valor: e.valor || 0,
-          amount: e.valor || 0,
-          local: e.descricao || e.local || '',
-          location: e.descricao || e.local || ''
-        }));
+        if (this.activeTrip) {
+          const expensesRes = await dbInstance.query({ 
+            statement: 'SELECT * FROM gastos WHERE viagem_id = ?;', 
+            values: [this.activeTrip.id] 
+          });
+          this.expensesList = (expensesRes.values || []).map((e: any) => ({
+            ...e,
+            categoria: e.nome_gasto || e.categoria || '',
+            category: e.nome_gasto || e.categoria || '',
+            valor: e.valor || 0,
+            amount: e.valor || 0,
+            local: e.descricao || e.local || '',
+            location: e.descricao || e.local || ''
+          }));
+        } else {
+          this.expensesList = [];
+        }
       } else {
         // Modo mock — usa localStorage como fonte única
         const allMockGastos = JSON.parse(localStorage.getItem('mock_gastos') || '[]');
         const mockViagens = JSON.parse(localStorage.getItem('mock_viagens') || '[]');
+        const userViagens = mockViagens.filter((v: any) => v.pessoa_id?.toString() === pessoaId.toString());
 
-        if (mockViagens.length > 0) {
-          this.activeTrip = mockViagens[mockViagens.length - 1];
+        if (userViagens.length > 0) {
+          this.activeTrip = userViagens[userViagens.length - 1];
         }
 
-        this.expensesList = allMockGastos.map((e: any) => ({
-          ...e,
-          categoria: e.categoria || e.category || e.nome_gasto || '',
-          category: e.categoria || e.category || e.nome_gasto || '',
-          valor: e.valor || e.amount || 0,
-          amount: e.valor || e.amount || 0,
-          local: e.local || e.location || e.descricao || '',
-          location: e.local || e.location || e.descricao || ''
-        }));
+        if (this.activeTrip) {
+          const tripIdStr = this.activeTrip.id.toString();
+          const activeGastos = allMockGastos.filter((g: any) => g.viagem_id?.toString() === tripIdStr || g.tripId?.toString() === tripIdStr);
+          this.expensesList = activeGastos.map((e: any) => ({
+            ...e,
+            categoria: e.categoria || e.category || e.nome_gasto || '',
+            category: e.categoria || e.category || e.nome_gasto || '',
+            valor: e.valor || e.amount || 0,
+            amount: e.valor || e.amount || 0,
+            local: e.local || e.location || e.descricao || '',
+            location: e.local || e.location || e.descricao || ''
+          }));
+        } else {
+          this.expensesList = [];
+        }
       }
 
       this.calculateFinancialTotals();
