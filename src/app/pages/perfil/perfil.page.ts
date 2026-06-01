@@ -78,22 +78,23 @@ export class PerfilPage implements OnInit {
         this.estatisticas = {
           viagens: viagens.length,
           locais: totalLocais,
-          paises: Math.max(1, viagens.length > 0 ? 1 : 0)
+          paises: viagens.length > 0 ? 1 : 0
         };
       } else {
-        // Modo mock: lê do localStorage
+        // Modo mock: lê do localStorage filtrando pelo usuário logado
         const mockViagens = JSON.parse(localStorage.getItem('mock_viagens') || '[]');
+        const userViagens = mockViagens.filter((v: any) => v.pessoa_id?.toString() === pessoaId.toString());
         const mockLocais = JSON.parse(localStorage.getItem('mock_locais') || '[]');
 
-        const viagensIds = mockViagens.map((v: any) => v.id.toString());
+        const viagensIds = userViagens.map((v: any) => v.id.toString());
         const totalLocais = mockLocais.filter((l: any) =>
           viagensIds.includes(l.viagem_id?.toString()) || viagensIds.includes(l.tripId?.toString())
         ).length;
 
         this.estatisticas = {
-          viagens: mockViagens.length,
+          viagens: userViagens.length,
           locais: totalLocais,
-          paises: Math.max(1, mockViagens.length > 0 ? 1 : 0)
+          paises: userViagens.length > 0 ? 1 : 0
         };
       }
     } catch (e) {
