@@ -182,15 +182,49 @@ export class DataService {
   }
 
   async getActiveTripId(): Promise<number> {
+    const loggedId = localStorage.getItem('usuario_logado_id');
+    const pessoaId = loggedId ? parseInt(loggedId, 10) : 1;
+
     const dbInstance = (this.sqlite as any).db;
     if (dbInstance) {
-      const res = await dbInstance.query({ statement: 'SELECT id FROM viagens ORDER BY id DESC LIMIT 1;' });
+      const res = await dbInstance.query({
+        statement: 'SELECT id FROM viagens WHERE pessoa_id = ? ORDER BY id DESC LIMIT 1;',
+        values: [pessoaId]
+      });
       if (res.values && res.values.length > 0) return res.values[0].id;
-      return 1;
+      
+      const dataInicio = new Date().toISOString().split('T')[0];
+      await dbInstance.run({
+        statement: 'INSERT INTO viagens (local, data_ida, data_volta, avaliacao, pessoa_id) VALUES (?, ?, ?, ?, ?);',
+        values: ['Viagem Atual', dataInicio, 'A definir', 5, pessoaId]
+      });
+      
+      const resNew = await dbInstance.query({
+        statement: 'SELECT id FROM viagens WHERE pessoa_id = ? ORDER BY id DESC LIMIT 1;',
+        values: [pessoaId]
+      });
+      return resNew.values[0].id;
     }
+    
     const viagens = JSON.parse(localStorage.getItem('mock_viagens') || '[]');
-    if (viagens.length > 0) return viagens[viagens.length - 1].id;
-    return 1;
+    const userViagens = viagens.filter((v: any) => v.pessoa_id?.toString() === pessoaId.toString());
+    
+    if (userViagens.length > 0) {
+      return userViagens[userViagens.length - 1].id;
+    }
+    
+    const dataInicio = new Date().toISOString().split('T')[0];
+    const newTrip = {
+      id: Date.now(),
+      nome: 'Viagem Atual',
+      data_inicio: dataInicio,
+      data_fim: 'A definir',
+      avaliacao: 5,
+      pessoa_id: pessoaId
+    };
+    viagens.push(newTrip);
+    localStorage.setItem('mock_viagens', JSON.stringify(viagens));
+    return newTrip.id;
   }
 
   // ===========================================================================
