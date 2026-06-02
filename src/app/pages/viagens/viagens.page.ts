@@ -113,9 +113,15 @@ export class ViagensPage implements OnInit, OnDestroy {
         const tripId = v.id;
 
         if (dbInstance) {
-          const locaisRes = await dbInstance.query({ statement: 'SELECT nome FROM locais WHERE viagem_id = ?;', values: [tripId] });
+          const locaisRes = await dbInstance.query({ statement: 'SELECT nome, foto_url FROM locais WHERE viagem_id = ?;', values: [tripId] });
           const count = locaisRes.values ? locaisRes.values.length : 0;
           const cidades_visitadas = (locaisRes.values || []).map((l: any) => l.nome).join(', ');
+          
+          let tripPhoto = '';
+          const localComFoto = (locaisRes.values || []).find((l: any) => l.foto_url && l.foto_url.trim() !== '');
+          if (localComFoto) {
+            tripPhoto = localComFoto.foto_url;
+          }
           
           const gastosRes = await dbInstance.query({ statement: 'SELECT SUM(valor) as total FROM gastos WHERE viagem_id = ?;', values: [tripId] });
           return {
@@ -126,6 +132,7 @@ export class ViagensPage implements OnInit, OnDestroy {
             avaliacao: v.avaliacao || 5,
             locais: count,
             cidades_visitadas: cidades_visitadas,
+            foto_url: tripPhoto,
             total_gasto: gastosRes.values?.[0]?.total || 0
           };
         } else {
@@ -137,6 +144,13 @@ export class ViagensPage implements OnInit, OnDestroy {
           const locaisCount = locaisDaViagem.length;
           const cidades_visitadas = locaisDaViagem.map((l: any) => l.nome || l.name).join(', ');
           
+          let tripPhoto = '';
+          const mockVisited = JSON.parse(localStorage.getItem('mock_visited_locations') || '[]');
+          const localComFoto = mockVisited.find((vLoc: any) => vLoc.photoUrl && locaisDaViagem.some((ldv: any) => ldv.nome === vLoc.name));
+          if (localComFoto) {
+            tripPhoto = localComFoto.photoUrl;
+          }
+          
           const totalGasto = mockGastos.filter((g: any) => g.viagem_id?.toString() === tripIdStr || g.tripId?.toString() === tripIdStr)
             .reduce((sum: number, g: any) => sum + (g.valor || g.amount || 0), 0);
           return {
@@ -147,6 +161,7 @@ export class ViagensPage implements OnInit, OnDestroy {
             avaliacao: v.avaliacao || 5,
             locais: locaisCount,
             cidades_visitadas: cidades_visitadas,
+            foto_url: tripPhoto,
             total_gasto: totalGasto
           };
         }
@@ -204,7 +219,7 @@ export class ViagensPage implements OnInit, OnDestroy {
   }
 
   goToTripDetails(tripId: number | string) {
-    this.router.navigate(['/tabs/viagem-detalhe', tripId]);
+    this.router.navigate(['/tabs/viagens/viagem-detalhe', tripId]);
   }
 
   openAddTripModal() { this.isAddTripModalOpen = true; }

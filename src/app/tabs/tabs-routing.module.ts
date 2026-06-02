@@ -16,7 +16,16 @@ const routes: Routes = [
       },
       {
         path: 'viagens',
-        loadChildren: () => import('../pages/viagens/viagens.module').then(m => m.ViagensPageModule)
+        children: [
+          {
+            path: '',
+            loadChildren: () => import('../pages/viagens/viagens.module').then(m => m.ViagensPageModule)
+          },
+          {
+            path: 'viagem-detalhe/:id',
+            loadChildren: () => import('../pages/viagem-detalhe/viagem-detalhe.module').then(m => m.ViagemDetalhePageModule)
+          }
+        ]
       },
       {
         path: 'financas',
@@ -26,10 +35,6 @@ const routes: Routes = [
       {
         path: 'perfil',
         loadChildren: () => import('../pages/perfil/perfil.module').then(m => m.PerfilPageModule)
-      },
-      {
-        path: 'viagem-detalhe/:id',
-        loadChildren: () => import('../pages/viagem-detalhe/viagem-detalhe.module').then(m => m.ViagemDetalhePageModule)
       },
       {
         path: '',
