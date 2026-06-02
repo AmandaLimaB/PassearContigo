@@ -166,6 +166,6 @@ export class PerfilPage implements OnInit {
 
   logout() {
     localStorage.removeItem('usuario_logado_id');
-    this.router.navigate(['/login']);
+    this.router.navigate(['/cadastro']);
   }
 }
