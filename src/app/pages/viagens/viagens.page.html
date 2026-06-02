@@ -64,35 +64,4 @@
     </ion-card>
   </div>
 
-  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button (click)="openAddTripModal()" color="tertiary" class="fab-pulse">
-      <ion-icon name="add"></ion-icon>
-    </ion-fab-button>
-  </ion-fab>
-
-  <ion-modal [isOpen]="isAddTripModalOpen" (didDismiss)="closeAddTripModal()" class="custom-modal">
-    <ng-template>
-      <ion-header class="ion-no-border">
-        <ion-toolbar color="primary">
-          <ion-title class="font-bold">Nova Viagem</ion-title>
-          <ion-buttons slot="end">
-            <ion-button (click)="closeAddTripModal()">
-              <ion-icon name="close" slot="icon-only"></ion-icon>
-            </ion-button>
-          </ion-buttons>
-        </ion-toolbar>
-      </ion-header>
-
-      <ion-content class="ion-padding bg-container">
-        <div class="form-container">
-          <ion-item lines="none" class="custom-input-item ion-margin-bottom">
-            <ion-label position="stacked">Destino / Título</ion-label>
-            <ion-input placeholder="Ex: Serra da Estrela" [(ngModel)]="newTripName"></ion-input>
-          </ion-item>
-
-          <ion-item lines="none" class="custom-input-item ion-margin-bottom">
-            <ion-label position="stacked">Data de Início</ion-label>
-            <ion-input placeholder="Ex: 2026-06-10" [(ngModel)]="newTripStartDate"></ion-input>
-          </ion-item>
-
-          <ion-item lines="none" class="custom-input-item ion-margin-bottom">
+</ion-content>
