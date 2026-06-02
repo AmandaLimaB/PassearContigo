@@ -16,6 +16,11 @@
               (click)="goToTripDetails(trip.id)" 
               class="trip-card ion-no-margin ion-margin-bottom ripple-active">
       
+      <!-- Imagem de Capa se a Viagem tiver uma foto capturada da galeria -->
+      <div *ngIf="trip.foto_url" class="trip-cover-image">
+        <img [src]="trip.foto_url" alt="Foto da Viagem" style="width: 100%; height: 150px; object-fit: cover;" />
+      </div>
+
       <ion-card-header>
         <div class="card-title-group">
           <h3>{{ trip.nome }}</h3>

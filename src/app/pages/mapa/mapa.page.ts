@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastController, LoadingController } from '@ionic/angular';
 import { DataService, MapLocation, VisitedLocation, Expense } from '../../services/data.service';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 
 // Definição dos possíveis passos do fluxo de registro de visita
 type FlowStep = 'map' | 'confirm' | 'feedback' | 'addRecord' | 'photo' | 'cost';
@@ -128,6 +129,24 @@ export class MapaPage implements OnInit {
     
     // Avança para a oferta de registros adicionais (Foto ou Custo)
     this.currentStep = 'addRecord';
+  }
+
+  // Captura ou seleciona uma foto real da galeria do dispositivo
+  async capturePhoto() {
+    try {
+      const image = await Camera.getPhoto({
+        quality: 80,
+        allowEditing: false,
+        resultType: CameraResultType.DataUrl,
+        source: CameraSource.Photos
+      });
+
+      if (image.dataUrl) {
+        await this.savePhoto(image.dataUrl);
+      }
+    } catch (e) {
+      console.warn('A seleção de foto foi cancelada ou ocorreu um erro:', e);
+    }
   }
 
   // Simula a captura de fotos do celular, permitindo escolher imagens ilustrativas
