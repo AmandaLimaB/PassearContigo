@@ -181,27 +181,43 @@ export class DataService {
     }));
   }
 
-  async getActiveTripId(): Promise<number> {
+  getRegionForLocation(locationName: string): string {
+    const lowerName = locationName.toLowerCase();
+    if (lowerName.includes('faro') || lowerName.includes('rocha') || lowerName.includes('vicente') || lowerName.includes('algarve') || lowerName.includes('albufeira')) {
+      return 'Sul de Portugal';
+    }
+    if (lowerName.includes('lisboa') || lowerName.includes('sintra') || lowerName.includes('coimbra') || lowerName.includes('fátima') || lowerName.includes('fatima') || lowerName.includes('óbidos') || lowerName.includes('obidos')) {
+      return 'Centro de Portugal';
+    }
+    // Default to Norte for Viana, Ponte de Lima, Braga, Porto, etc.
+    return 'Norte de Portugal';
+  }
+
+  async getActiveTripId(locationName?: string): Promise<number> {
     const loggedId = localStorage.getItem('usuario_logado_id');
     const pessoaId = loggedId ? parseInt(loggedId, 10) : 1;
+    
+    const targetTripName = locationName ? this.getRegionForLocation(locationName) : 'Norte de Portugal';
 
     const dbInstance = (this.sqlite as any).db;
     if (dbInstance) {
-      const res = await dbInstance.query({
-        statement: 'SELECT id FROM viagens WHERE pessoa_id = ? ORDER BY id DESC LIMIT 1;',
-        values: [pessoaId]
+      // Tenta achar a viagem com o nome da região exata
+      const resSpecific = await dbInstance.query({
+        statement: 'SELECT id FROM viagens WHERE pessoa_id = ? AND local = ? ORDER BY id DESC LIMIT 1;',
+        values: [pessoaId, targetTripName]
       });
-      if (res.values && res.values.length > 0) return res.values[0].id;
+      if (resSpecific.values && resSpecific.values.length > 0) return resSpecific.values[0].id;
       
+      // Se não tem pra essa região, cria!
       const dataInicio = new Date().toISOString().split('T')[0];
       await dbInstance.run({
         statement: 'INSERT INTO viagens (local, data_ida, data_volta, avaliacao, pessoa_id) VALUES (?, ?, ?, ?, ?);',
-        values: ['Viagem Atual', dataInicio, 'A definir', 5, pessoaId]
+        values: [targetTripName, dataInicio, 'A definir', 5, pessoaId]
       });
       
       const resNew = await dbInstance.query({
-        statement: 'SELECT id FROM viagens WHERE pessoa_id = ? ORDER BY id DESC LIMIT 1;',
-        values: [pessoaId]
+        statement: 'SELECT id FROM viagens WHERE pessoa_id = ? AND local = ? ORDER BY id DESC LIMIT 1;',
+        values: [pessoaId, targetTripName]
       });
       return resNew.values[0].id;
     }
@@ -209,14 +225,15 @@ export class DataService {
     const viagens = JSON.parse(localStorage.getItem('mock_viagens') || '[]');
     const userViagens = viagens.filter((v: any) => v.pessoa_id?.toString() === pessoaId.toString());
     
-    if (userViagens.length > 0) {
-      return userViagens[userViagens.length - 1].id;
+    const specificTrip = userViagens.find((v: any) => v.nome === targetTripName);
+    if (specificTrip) {
+      return specificTrip.id;
     }
     
     const dataInicio = new Date().toISOString().split('T')[0];
     const newTrip = {
       id: Date.now(),
-      nome: 'Viagem Atual',
+      nome: targetTripName,
       data_inicio: dataInicio,
       data_fim: 'A definir',
       avaliacao: 5,
@@ -245,7 +262,7 @@ export class DataService {
   }
 
   async saveVisitedLocation(visited: VisitedLocation): Promise<void> {
-    const activeTripId = await this.getActiveTripId();
+    const activeTripId = await this.getActiveTripId(visited.name);
     const rating = visited.rating || 5;
     const comment = visited.comment || '';
     const photoUrl = visited.photoUrl || '';
@@ -307,7 +324,7 @@ export class DataService {
   }
 
   async saveExpense(expense: Expense): Promise<void> {
-    const activeTripId = await this.getActiveTripId();
+    const activeTripId = await this.getActiveTripId(expense.location);
 
     const dbInstance = (this.sqlite as any).db;
     if (dbInstance) {
