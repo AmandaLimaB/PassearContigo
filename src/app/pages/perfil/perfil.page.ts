@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { ToastController } from '@ionic/angular';
 import { ScreenOrientation } from '@capacitor/screen-orientation';
 import { SqliteService } from '../../services/sqlite.service';
+import { DataService } from '../../services/data.service';
 
 @Component({
   selector: 'app-perfil',
@@ -28,11 +30,16 @@ export class PerfilPage implements OnInit {
 
   constructor(
     private sqlite: SqliteService,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private dataService: DataService,
+    private router: Router
   ) { }
 
   async ngOnInit() {
     await this.applyRotationLock();
+    // Set the flag to allow access to finances
+    await this.dataService.setVisitedPerfil(true);
+
     this.sqlite.bancoPronto$.subscribe(async () => {
       await this.carregarDadosDoPerfil();
     });
@@ -155,5 +162,10 @@ export class PerfilPage implements OnInit {
   async presentToast(message: string) {
     const toast = await this.toastController.create({ message, duration: 2000, position: 'bottom' });
     await toast.present();
+  }
+
+  logout() {
+    localStorage.removeItem('usuario_logado_id');
+    this.router.navigate(['/login']);
   }
 }
