@@ -34,42 +34,43 @@ export class TabsPage implements OnInit, OnDestroy {
   // Monitora os dados do Acelerômetro programaticamente em tempo real (Requisito 12)
   private async startAccelerometerListening() {
     try {
-      // Adiciona o ouvinte para o evento 'accel' (Acelerômetro) através do Capacitor Motion
       this.accelListenerHandle = await Motion.addListener('accel', async (event) => {
-        // Obtermos os eixos X (lateral) e Y (vertical) incluindo a gravidade da Terra
         const x = event.accelerationIncludingGravity.x;
         const y = event.accelerationIncludingGravity.y;
         
-        // Lógica programática para validar a orientação física do dispositivo móvel:
-        // Se a aceleração no eixo X for maior que no eixo Y de forma expressiva,
-        // significa que o dispositivo foi rotacionado fisicamente de lado (Landscape)
+        // Se a inclinação lateral for forte, muda para Landscape
         if (Math.abs(x) > Math.abs(y) + 2.5) {
-          // O sensor detectou rotação física na horizontal (Landscape)
-          await this.handleDeviceLandscapeDetection();
+          await this.handleOrientationChange('landscape');
+        } 
+        // Se a inclinação vertical for forte, volta para Portrait
+        else if (Math.abs(y) > Math.abs(x) + 2.5) {
+          await this.handleOrientationChange('portrait');
         }
       });
       
       console.log('Monitoramento do acelerômetro ativado programaticamente com sucesso!');
     } catch (err) {
-      // Fallback gracioso para testes no navegador que não possui giroscópio físico
       console.warn('O acelerômetro não está disponível no navegador web (Sensor simulado programaticamente)', err);
     }
   }
 
-  // Lógica acionada quando o sensor detecta inclinação Landscape
-  private async handleDeviceLandscapeDetection() {
+  private currentOrientation = 'portrait';
+
+  private async handleOrientationChange(orientation: 'portrait' | 'landscape') {
+    if (this.currentOrientation === orientation) return;
+    
     try {
-      // Bloqueia a orientação de tela em Portrait (Retrato) programaticamente via código
-      await ScreenOrientation.lock({ orientation: 'portrait' });
+      this.currentOrientation = orientation;
+      await ScreenOrientation.lock({ orientation });
       
-      // Apresenta aviso sutil na tela do dispositivo alertando sobre a ação do acelerômetro
       const now = Date.now();
-      if (now - this.lastToastTime > 5000) { // Throttle de 5 segundos para evitar spam de Toasts
+      if (now - this.lastToastTime > 5000) {
         this.lastToastTime = now;
-        this.presentToast('O Acelerômetro detectou inclinação lateral! Tela bloqueada programaticamente em Retrato.');
+        const modo = orientation === 'landscape' ? 'Horizontal' : 'Vertical';
+        this.presentToast(`Acelerômetro detectou movimento! Tela alterada para modo ${modo}.`);
       }
     } catch (err) {
-      console.warn('Erro ao forçar orientação via ScreenOrientation (simulado em navegador web)');
+      console.warn('Erro ao forçar orientação via ScreenOrientation', err);
     }
   }
 
