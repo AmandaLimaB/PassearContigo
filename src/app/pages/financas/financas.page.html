@@ -11,7 +11,7 @@
       <ion-icon name="cash-outline"></ion-icon>
       <span>Total Gasto</span>
     </div>
-    <h1 class="summary-value">{{ totalSpent | currency:'EUR':'symbol':'1.2-2':'pt-BR' }}</h1>
+    <h1 class="summary-value">{{ totalSpent | currency:'EUR':'symbol':'1.2-2':'pt-PT' }}</h1>
     <div class="summary-subtext">
       <ion-icon name="trending-up-outline"></ion-icon>
       <span>Viagem Atual ({{ activeTrip?.nome || 'Sem viagem ativa' }})</span>
@@ -32,7 +32,7 @@
       <div *ngFor="let cat of categoryTotals" class="category-bar-group ion-margin-bottom">
         <div class="category-info-row">
           <span class="category-name">{{ cat.category }}</span>
-          <span class="category-value">{{ cat.amount | currency:'EUR':'symbol':'1.2-2':'pt-BR' }} ({{ cat.percentage }}%)</span>
+          <span class="category-value">{{ cat.amount | currency:'EUR':'symbol':'1.2-2':'pt-PT' }} ({{ cat.percentage }}%)</span>
         </div>
         <div class="progress-bar-container">
           <div class="progress-bar-fill"
@@ -65,7 +65,7 @@
       </div>
 
       <div class="expense-amount font-bold">
-        <span>- {{ (expense.valor || expense.amount) | currency:'EUR':'symbol':'1.2-2':'pt-BR' }}</span>
+        <span>- {{ (expense.valor || expense.amount) | currency:'EUR':'symbol':'1.2-2':'pt-PT' }}</span>
       </div>
 
     </div>
