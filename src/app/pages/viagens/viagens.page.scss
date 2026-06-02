@@ -85,6 +85,13 @@
     ion-icon {
       font-size: 1.2rem;
     }
+
+    .cities-text {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   }
 }
 

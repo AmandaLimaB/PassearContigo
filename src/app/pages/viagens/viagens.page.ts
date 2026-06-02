@@ -12,11 +12,7 @@ import { Subscription } from 'rxjs';
   standalone: false,
 })
 export class ViagensPage implements OnInit, OnDestroy {
-  tripsNorte: any[] = [];
-  tripsCentro: any[] = [];
-  tripsSul: any[] = [];
-  tripsOutras: any[] = [];
-  tripCategories: { name: string; trips: any[] }[] = [];
+  tripsList: any[] = [];
   isAddTripModalOpen = false;
   newTripName = '';
   newTripStartDate = '';
@@ -60,73 +56,48 @@ export class ViagensPage implements OnInit, OnDestroy {
       const viagensCruas = await this.sqlite.listarViagensDaPessoa(pessoaId);
       const dbInstance = (this.sqlite as any).db;
 
-      const todasViagens = await Promise.all(viagensCruas.map(async (v: any) => {
+      this.tripsList = await Promise.all(viagensCruas.map(async (v: any) => {
         const tripId = v.id;
-        let locaisCount = 0;
-        let totalGasto = 0;
-        let locaisNomes: string[] = [];
 
         if (dbInstance) {
           const locaisRes = await dbInstance.query({ statement: 'SELECT nome FROM locais WHERE viagem_id = ?;', values: [tripId] });
-          locaisCount = locaisRes.values ? locaisRes.values.length : 0;
-          locaisNomes = locaisRes.values ? locaisRes.values.map((l:any) => (l.nome || '').toLowerCase()) : [];
+          const count = locaisRes.values ? locaisRes.values.length : 0;
+          const cidades_visitadas = (locaisRes.values || []).map((l: any) => l.nome).join(', ');
           
           const gastosRes = await dbInstance.query({ statement: 'SELECT SUM(valor) as total FROM gastos WHERE viagem_id = ?;', values: [tripId] });
-          totalGasto = gastosRes.values?.[0]?.total || 0;
+          return {
+            id: v.id,
+            nome: v.local || v.nome || '',
+            data_inicio: v.data_ida || v.data_inicio || '',
+            data_fim: v.data_volta || v.data_fim || '',
+            avaliacao: v.avaliacao || 5,
+            locais: count,
+            cidades_visitadas: cidades_visitadas,
+            total_gasto: gastosRes.values?.[0]?.total || 0
+          };
         } else {
           const tripIdStr = tripId.toString();
           const mockLocais = JSON.parse(localStorage.getItem('mock_locais') || '[]');
           const mockGastos = JSON.parse(localStorage.getItem('mock_gastos') || '[]');
           
-          const tripLocais = mockLocais.filter((l: any) => l.viagem_id?.toString() === tripIdStr || l.tripId?.toString() === tripIdStr);
-          locaisCount = tripLocais.length;
-          locaisNomes = tripLocais.map((l:any) => (l.nome || l.name || '').toLowerCase());
+          const locaisDaViagem = mockLocais.filter((l: any) => l.viagem_id?.toString() === tripIdStr || l.tripId?.toString() === tripIdStr);
+          const locaisCount = locaisDaViagem.length;
+          const cidades_visitadas = locaisDaViagem.map((l: any) => l.nome || l.name).join(', ');
           
-          totalGasto = mockGastos.filter((g: any) => g.viagem_id?.toString() === tripIdStr || g.tripId?.toString() === tripIdStr)
+          const totalGasto = mockGastos.filter((g: any) => g.viagem_id?.toString() === tripIdStr || g.tripId?.toString() === tripIdStr)
             .reduce((sum: number, g: any) => sum + (g.valor || g.amount || 0), 0);
+          return {
+            id: v.id,
+            nome: v.nome || v.local || '',
+            data_inicio: v.data_inicio || v.data_ida || '',
+            data_fim: v.data_fim || v.data_volta || '',
+            avaliacao: v.avaliacao || 5,
+            locais: locaisCount,
+            cidades_visitadas: cidades_visitadas,
+            total_gasto: totalGasto
+          };
         }
-
-        return {
-          id: v.id,
-          nome: v.nome || v.local || '',
-          data_inicio: v.data_inicio || v.data_ida || '',
-          data_fim: v.data_fim || v.data_volta || '',
-          avaliacao: v.avaliacao || 5,
-          locais: locaisCount,
-          locaisNomes: locaisNomes,
-          total_gasto: totalGasto
-        };
       }));
-
-      // Categorizar as viagens
-      this.tripsNorte = [];
-      this.tripsCentro = [];
-      this.tripsSul = [];
-      this.tripsOutras = [];
-
-      const norteKws = ['norte', 'viana', 'lima', 'porto', 'braga', 'guimarães', 'luzia', 'douro', 'minho'];
-      const centroKws = ['centro', 'lisboa', 'sintra', 'coimbra', 'aveiro', 'fátima', 'leiria', 'óbidos'];
-      const sulKws = ['sul', 'algarve', 'faro', 'rocha', 'vicente', 'albufeira', 'portimão', 'lagos', 'tavira'];
-
-      todasViagens.forEach(trip => {
-        const textToSearch = (trip.nome + ' ' + trip.locaisNomes.join(' ')).toLowerCase();
-        
-        if (norteKws.some(kw => textToSearch.includes(kw))) {
-          this.tripsNorte.push(trip);
-        } else if (sulKws.some(kw => textToSearch.includes(kw))) {
-          this.tripsSul.push(trip);
-        } else if (centroKws.some(kw => textToSearch.includes(kw))) {
-          this.tripsCentro.push(trip);
-        } else {
-          this.tripsOutras.push(trip);
-        }
-      });
-
-      this.tripCategories = [];
-      if (this.tripsNorte.length > 0) this.tripCategories.push({ name: 'Norte de Portugal', trips: this.tripsNorte });
-      if (this.tripsCentro.length > 0) this.tripCategories.push({ name: 'Centro de Portugal', trips: this.tripsCentro });
-      if (this.tripsSul.length > 0) this.tripCategories.push({ name: 'Sul de Portugal', trips: this.tripsSul });
-      if (this.tripsOutras.length > 0) this.tripCategories.push({ name: 'Outras Regiões', trips: this.tripsOutras });
     } catch (erro) {
       console.error('Erro ao carregar viagens:', erro);
     }

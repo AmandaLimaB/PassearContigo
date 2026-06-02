@@ -12,54 +12,51 @@
   </div>
 
   <div class="trips-list">
-    <div *ngIf="tripCategories.length === 0" class="ion-text-center ion-padding">
-      <p>Nenhuma viagem encontrada. Clique no + para adicionar!</p>
-    </div>
-
-    <div *ngFor="let category of tripCategories" class="category-section ion-margin-bottom">
-      <h3 class="category-title font-bold ion-padding-start" style="color: var(--ion-color-primary); margin-bottom: 10px; margin-top: 5px;">{{ category.name }}</h3>
+    <ion-card *ngFor="let trip of tripsList" 
+              (click)="goToTripDetails(trip.id)" 
+              class="trip-card ion-no-margin ion-margin-bottom ripple-active">
       
-      <ion-card *ngFor="let trip of category.trips" 
-                (click)="goToTripDetails(trip.id)" 
-                class="trip-card ion-no-margin ion-margin-bottom ripple-active">
-        
-        <ion-card-header>
-          <div class="card-title-group">
-            <h3>{{ trip.nome }}</h3>
-            <span *ngIf="trip.id === 1 || trip.id === '1'" class="status-badge active">Ativa</span>
-          </div>
-        </ion-card-header>
+      <ion-card-header>
+        <div class="card-title-group">
+          <h3>{{ trip.nome }}</h3>
+          <span *ngIf="trip.id === 1 || trip.id === '1'" class="status-badge active">Ativa</span>
+        </div>
+      </ion-card-header>
 
-        <ion-card-content>
-          <div class="trip-details">
-            
-            <div class="detail-row">
-              <ion-icon name="calendar-outline" color="tertiary"></ion-icon>
-              <span>{{ trip.data_inicio }} - {{ trip.data_fim }}</span>
-            </div>
-
-            <div class="detail-row">
-              <ion-icon name="location-outline" color="tertiary"></ion-icon>
-              <span>{{ trip.locais || 0 }} locais visitados</span>
-            </div>
-
-            <div class="detail-row">
-              <ion-icon name="cash-outline" color="tertiary"></ion-icon>
-              <span class="font-semibold">{{ (trip.total_gasto || 0) | currency:'EUR':'symbol':'1.2-2':'pt-BR' }} gastos</span>
-            </div>
-
+      <ion-card-content>
+        <div class="trip-details">
+          
+          <div class="detail-row">
+            <ion-icon name="calendar-outline" color="tertiary"></ion-icon>
+            <span>{{ trip.data_inicio }} - {{ trip.data_fim }}</span>
           </div>
 
-          <div class="rating-stars ion-margin-top">
-            <ion-icon *ngFor="let starIdx of getStarsArray(trip.avaliacao); let i = index" 
-                      name="star" 
-                      [color]="i < trip.avaliacao ? 'warning' : 'medium'"
-                      class="star-icon"></ion-icon>
+          <div class="detail-row">
+            <ion-icon name="location-outline" color="tertiary"></ion-icon>
+            <span>{{ trip.locais || 0 }} locais visitados</span>
           </div>
 
-        </ion-card-content>
-      </ion-card>
-    </div>
+          <div class="detail-row">
+            <ion-icon name="cash-outline" color="tertiary"></ion-icon>
+            <span class="font-semibold">{{ (trip.total_gasto || 0) | currency:'EUR':'symbol':'1.2-2':'pt-BR' }} gastos</span>
+          </div>
+
+          <div class="detail-row" *ngIf="trip.cidades_visitadas">
+            <ion-icon name="pin-outline" color="tertiary"></ion-icon>
+            <span class="cities-text">{{ trip.cidades_visitadas }}</span>
+          </div>
+
+        </div>
+
+        <div class="rating-stars ion-margin-top">
+          <ion-icon *ngFor="let starIdx of getStarsArray(trip.avaliacao); let i = index" 
+                    name="star" 
+                    [color]="i < trip.avaliacao ? 'warning' : 'medium'"
+                    class="star-icon"></ion-icon>
+        </div>
+
+      </ion-card-content>
+    </ion-card>
   </div>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
