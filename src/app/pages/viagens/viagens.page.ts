@@ -53,8 +53,61 @@ export class ViagensPage implements OnInit, OnDestroy {
       const loggedId = localStorage.getItem('usuario_logado_id');
       const pessoaId = loggedId ? parseInt(loggedId, 10) : 1;
 
-      const viagensCruas = await this.sqlite.listarViagensDaPessoa(pessoaId);
       const dbInstance = (this.sqlite as any).db;
+
+      if (dbInstance) {
+        await dbInstance.run({
+          statement: "UPDATE viagens SET local = 'Norte de Portugal' WHERE local = 'Viagem Atual' AND pessoa_id = ?",
+          values: [pessoaId]
+        });
+
+        const regioes = ['Norte de Portugal', 'Centro de Portugal', 'Sul de Portugal'];
+        for (const r of regioes) {
+          const res = await dbInstance.query({
+            statement: 'SELECT id FROM viagens WHERE pessoa_id = ? AND local = ? LIMIT 1;',
+            values: [pessoaId, r]
+          });
+          if (!res.values || res.values.length === 0) {
+            const dataInicio = new Date().toISOString().split('T')[0];
+            await dbInstance.run({
+              statement: 'INSERT INTO viagens (local, data_ida, data_volta, avaliacao, pessoa_id) VALUES (?, ?, ?, ?, ?);',
+              values: [r, dataInicio, 'A definir', 5, pessoaId]
+            });
+          }
+        }
+      } else {
+         const mockViagens = JSON.parse(localStorage.getItem('mock_viagens') || '[]');
+         let mudou = false;
+         for (const v of mockViagens) {
+           if (v.pessoa_id?.toString() === pessoaId.toString() && (v.nome === 'Viagem Atual' || v.local === 'Viagem Atual')) {
+             v.nome = 'Norte de Portugal';
+             v.local = 'Norte de Portugal';
+             mudou = true;
+           }
+         }
+         
+         const regioes = ['Norte de Portugal', 'Centro de Portugal', 'Sul de Portugal'];
+         for (const r of regioes) {
+           const existe = mockViagens.find((v: any) => v.pessoa_id?.toString() === pessoaId.toString() && (v.nome === r || v.local === r));
+           if (!existe) {
+             mockViagens.push({
+               id: Date.now() + Math.floor(Math.random() * 1000),
+               nome: r,
+               local: r,
+               data_inicio: new Date().toISOString().split('T')[0],
+               data_fim: 'A definir',
+               avaliacao: 5,
+               pessoa_id: pessoaId
+             });
+             mudou = true;
+           }
+         }
+         if (mudou) {
+           localStorage.setItem('mock_viagens', JSON.stringify(mockViagens));
+         }
+      }
+
+      const viagensCruas = await this.sqlite.listarViagensDaPessoa(pessoaId);
 
       this.tripsList = await Promise.all(viagensCruas.map(async (v: any) => {
         const tripId = v.id;
