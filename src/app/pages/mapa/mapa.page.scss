@@ -185,6 +185,7 @@
 
 /* FAB Botão com efeito de pulsação suave */
 .fab-pulse {
+  border-radius: 50%;
   --box-shadow: 0 4px 16px rgba(25, 118, 210, 0.35);
   animation: fab-glow 2.5s infinite;
 }
