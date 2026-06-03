@@ -12,7 +12,7 @@
     <!-- Indicador de Status GPS Ativo (Aparência Premium) -->
     <div class="gps-status-pill">
       <span class="pulsing-dot green"></span>
-      <span class="pill-text text-primary">GPS Ativo</span>
+      <span class="pill-text text-primary" style="color: var(--ion-color-primary);">GPS Ativo</span>
     </div>
 
     <!-- Indicador de Partilha de Localização Ativa (Requisito 12) -->
@@ -207,8 +207,8 @@
 
       <!-- Categoria da Despesa -->
       <ion-item lines="none" class="custom-select-item ion-margin-top">
-        <ion-label>Categoria</ion-label>
-        <ion-select [(ngModel)]="tempCostCategory" interface="action-sheet" class="font-bold">
+        <ion-label style="color: #333;">Categoria</ion-label>
+        <ion-select [(ngModel)]="tempCostCategory" interface="action-sheet" class="font-bold" style="color: #000;">
           <ion-select-option value="Alimentação">Alimentação</ion-select-option>
           <ion-select-option value="Transporte">Transporte</ion-select-option>
           <ion-select-option value="Entradas/Cultura">Entradas/Cultura</ion-select-option>
