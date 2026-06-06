@@ -49,7 +49,7 @@ export class ViagemDetalhePage implements OnInit, OnDestroy {
       const tripIdStr = this.tripId.toString();
 
       if (dbInstance) {
-        // Contagens dinâmicas via SQL
+        // Conta sql
         const locaisRes = await dbInstance.query({ statement: 'SELECT COUNT(*) as count FROM locais WHERE viagem_id = ?;', values: [this.tripId] });
         const gastosRes = await dbInstance.query({ statement: 'SELECT SUM(valor) as total FROM gastos WHERE viagem_id = ?;', values: [this.tripId] });
 
@@ -91,7 +91,7 @@ export class ViagemDetalhePage implements OnInit, OnDestroy {
         }));
 
       } else {
-        // Modo mock — lê tudo do localStorage (fonte única de verdade)
+        // Modo mock
         const mockViagens = JSON.parse(localStorage.getItem('mock_viagens') || '[]');
         const rawTrip = mockViagens.find((t: any) => t.id.toString() === tripIdStr);
 

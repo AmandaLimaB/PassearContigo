@@ -25,7 +25,7 @@ export class AppComponent {
 
       try {
         await Motion.addListener('accel', (event) => {
-          // Se o dispositivo for inclinado lateralmente (eixo X)
+          // Se inclinar lateralmente
           if (Math.abs(event.acceleration.x) > 7) {
             console.log('Dispositivo inclinado (Landscape detectado)! Mantendo em Portrait.');
             ScreenOrientation.lock({ orientation: 'portrait' }).catch(e => console.warn(e));

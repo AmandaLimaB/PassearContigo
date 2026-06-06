@@ -9,14 +9,14 @@ import { AlertController } from '@ionic/angular';
   styleUrls: ['./cadastro.page.scss'],
 })
 export class CadastroPage implements OnInit {
-  // Variável que controla qual formulário aparece na tela ('login' ou 'cadastro')
+  // Controla tela atual
   modo: 'login' | 'cadastro' = 'login';
 
-  // Campos partilhados / Login
+  // Campos login
   emailInput: string = '';
   senhaInput: string = '';
 
-  // Campos exclusivos do Cadastro
+  // Campos cadastro
   nomeInput: string = '';
   imagemBase64: string = '';
   
@@ -25,10 +25,10 @@ export class CadastroPage implements OnInit {
 
   ngOnInit() {}
 
-  // Função para alternar entre as telas
+  // Muda tela
   mudarModo(novoModo: 'login' | 'cadastro') {
     this.modo = novoModo;
-    // Limpa os campos ao alternar para evitar confusão
+    // Limpa campos
     this.emailInput = '';
     this.senhaInput = '';
     this.nomeInput = '';
@@ -40,13 +40,13 @@ export class CadastroPage implements OnInit {
       header: titulo,
       message: mensagem,
       buttons: ['OK'],
-      cssClass: 'alerta-customizado' // Opcional: para estilizar via CSS depois
+      cssClass: 'alerta-customizado' // Estilo alerta
     });
 
     await alert.present();
   }
 
-  // Lógica de Login
+  // Faz login
   async efetuarLogin() {
     if (!this.emailInput || !this.senhaInput) {
       await this.exibirAlerta('Aviso', 'Por favor, preencha o e-mail e a senha!');
@@ -72,7 +72,7 @@ export class CadastroPage implements OnInit {
     }
   }
 
-  // Lógica de Cadastro
+  // Faz cadastro
   async efetuarCadastro() {
     if (!this.nomeInput || !this.emailInput || !this.senhaInput) {
       await this.exibirAlerta('Aviso', 'Por favor, preencha todos os dados!');
@@ -80,14 +80,14 @@ export class CadastroPage implements OnInit {
     }
 
     try {
-      // 1. Verificar se o utilizador já existe antes de tentar cadastrar
+      // Checa se existe
       const usuarioExiste = await this.sqlite.verificarUsuarioExistente(this.emailInput);
       if (usuarioExiste) {
         await this.exibirAlerta('Aviso', 'Este e-mail já está registado!');
         return;
       }
 
-      // 2. Tentar cadastrar a pessoa na base de dados
+      // Salva pessoa
       await this.sqlite.cadastrarPessoa(
         this.nomeInput,
         this.emailInput,
@@ -96,7 +96,7 @@ export class CadastroPage implements OnInit {
       );
       
       await this.exibirAlerta('Conta criada com sucesso!', 'Faça login agora.');
-      this.mudarModo('login'); // Alterna automaticamente para o formulário de login
+      this.mudarModo('login'); // Vai pro login
     } catch (erro: any) {
       console.error('Erro detalhado no fluxo de registo:', erro);
       const msg = erro?.message || (typeof erro === 'string' ? erro : JSON.stringify(erro)) || 'Erro desconhecido';
@@ -104,7 +104,7 @@ export class CadastroPage implements OnInit {
     }
   }
 
-  // Processar foto de perfil
+  // Pega foto
   onFileSelected(event: any) {
     const file = event.target.files[0];
     if (file) {

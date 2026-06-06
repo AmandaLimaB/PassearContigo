@@ -37,7 +37,7 @@ export class PerfilPage implements OnInit {
 
   async ngOnInit() {
     await this.applyRotationLock();
-    // Set the flag to allow access to finances
+    // Libera finanças
     await this.dataService.setVisitedPerfil(true);
 
     this.sqlite.bancoPronto$.subscribe(async () => {
@@ -88,7 +88,7 @@ export class PerfilPage implements OnInit {
           paises: viagens.length > 0 ? 1 : 0
         };
       } else {
-        // Modo mock: lê do localStorage filtrando pelo usuário logado
+        // Lê mock local
         const mockViagens = JSON.parse(localStorage.getItem('mock_viagens') || '[]');
         const userViagens = mockViagens.filter((v: any) => v.pessoa_id?.toString() === pessoaId.toString());
         const mockLocais = JSON.parse(localStorage.getItem('mock_locais') || '[]');

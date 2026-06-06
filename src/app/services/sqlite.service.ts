@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { CapacitorSQLite } from 'capacitor-sqlite';
-import { BehaviorSubject, Observable } from 'rxjs'; // <-- IMPORTANTE para gerir o estado assíncrono
+import { BehaviorSubject, Observable } from 'rxjs'; // Assíncrono
 
 @Injectable({
   providedIn: 'root'
@@ -8,15 +8,15 @@ import { BehaviorSubject, Observable } from 'rxjs'; // <-- IMPORTANTE para gerir
 export class SqliteService {
   private sqliteConnection: any;
   private db: any;
-  private dbReady: Promise<void>; // Promise para garantir abertura segura
+  private dbReady: Promise<void>; // Promessa DB
   
-  // Subject que avisa a aplicação quando a ligação ao banco de dados está aberta
+  // Avisa quando DB abre
   private bancoProntoSubject = new BehaviorSubject<boolean>(false);
   public bancoPronto$: Observable<boolean> = this.bancoProntoSubject.asObservable();
   
   constructor() {
     this.sqliteConnection = CapacitorSQLite;
-    // Dispara a inicialização automática ao carregar a app e guarda a Promise
+    // Inicia DB
     this.dbReady = this.inicializarBancoDeDados();
   }
 
@@ -43,10 +43,10 @@ export class SqliteService {
 
       await this.db.open();
 
-      // Ativar suporte a Chaves Estrangeiras
+      // Liga chaves
       await this.db.execute({ statements: `PRAGMA foreign_keys = ON;` });
 
-      // 1. TABELA PESSOA
+      // Tabela pessoa
       const tabelaPessoa = `
         CREATE TABLE IF NOT EXISTS pessoas (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -57,7 +57,7 @@ export class SqliteService {
         );
       `;
 
-      // 2. TABELA VIAGENS
+      // Tabela viagens
       const tabelaViagens = `
         CREATE TABLE IF NOT EXISTS viagens (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -70,7 +70,7 @@ export class SqliteService {
         );
       `;
 
-      // 3. TABELA GASTOS
+      // Tabela gastos
       const tabelaGastos = `
         CREATE TABLE IF NOT EXISTS gastos (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -83,7 +83,7 @@ export class SqliteService {
         );
       `;
 
-      // 4. TABELA LOCAIS
+      // Tabela locais
       const tabelaLocais = `
         CREATE TABLE IF NOT EXISTS locais (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -96,29 +96,29 @@ export class SqliteService {
         );
       `;
 
-      // Executar a criação de todas as tabelas
+      // Cria tabelas
       await this.db.execute({ statements: tabelaPessoa });
       await this.db.execute({ statements: tabelaViagens });
       await this.db.execute({ statements: tabelaGastos });
       await this.db.execute({ statements: tabelaLocais });
 
-      // Migração para adicionar a coluna valor caso a base de dados já exista
+      // Migração gastos
       try {
         await this.db.execute({ statements: 'ALTER TABLE gastos ADD COLUMN valor REAL NOT NULL DEFAULT 0.0;' });
       } catch (e) {
-        // Ignora erro se a coluna já existir
+        // Ignora erro
       }
 
-      // Migração para adicionar a coluna foto_url caso a base de dados já exista
+      // Migração foto
       try {
         await this.db.execute({ statements: 'ALTER TABLE locais ADD COLUMN foto_url TEXT;' });
       } catch (e) {
-        // Ignora erro se a coluna já existir
+        // Ignora erro
       }
 
       console.log('Todas as tabelas do projeto foram criadas com sucesso!');
       
-      // AVISAR A APLICAÇÃO QUE O BANCO ESTÁ PRONTO PARA RECEBER CADASTROS
+      // DB pronto
       this.bancoProntoSubject.next(true);
 
     } catch (erro) {
@@ -127,14 +127,12 @@ export class SqliteService {
     }
   }
 
-  // =========================================================================
-  // FUNÇÕES DE INSERÇÃO (CORRIGIDAS PARA A NOVA API DO CAPACITOR)
-  // =========================================================================
+  // Inserção
 
   async cadastrarPessoa(nome: string, email: string, senha: string, imagemBase64: string): Promise<void> {
     await this.dbReady;
     if (!this.db) {
-      // Fallback web / mock usando localStorage
+      // Mock local
       const pessoas = JSON.parse(localStorage.getItem('mock_pessoas') || '[]');
       const novaPessoa = {
         id: Date.now(),
@@ -161,14 +159,14 @@ export class SqliteService {
   async verificarUsuarioExistente(email: string): Promise<boolean> {
     await this.dbReady;
     if (!this.db) {
-      // Fallback web / mock usando localStorage
+      // Mock local
       const pessoas = JSON.parse(localStorage.getItem('mock_pessoas') || '[]');
       return pessoas.some((p: any) => p.email === email);
     }
     try {
       const sql = `SELECT * FROM pessoas WHERE email = ?;`;
       const res = await this.db.query({ statement: sql, values: [email] });
-      // Valida corretamente se o array de resultados está vazio e se res.values existe
+      // Valida select
       if (res.values && res.values.length > 0) {
         return true;
       }
@@ -238,14 +236,12 @@ export class SqliteService {
     await this.db.run({ statement: sql, values: [nome, descricao, nota, viagemId, fotoUrl || ''] });
   }
 
-  // =========================================================================
-  // FUNÇÕES DE CONSULTA (SELECT)
-  // =========================================================================
+  // Consulta
 
   async listarUtilizadores(): Promise<any[]> {
     await this.dbReady;
     if (!this.db) {
-      // Fallback web / mock usando localStorage
+      // Mock local
       return JSON.parse(localStorage.getItem('mock_pessoas') || '[]');
     }
     const sql = `SELECT * FROM pessoas;`;
@@ -278,9 +274,7 @@ export class SqliteService {
     return resultado.values ? resultado.values : [];
   }
 
-  // =========================================================================
-  // FUNÇÕES DE EDIÇÃO (UPDATE)
-  // =========================================================================
+  // Edição
 
   async editarPessoa(id: number, nome: string, email: string, senha: string, imagemBase64: string): Promise<void> {
     await this.dbReady;

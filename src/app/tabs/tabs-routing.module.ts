@@ -4,7 +4,7 @@ import { TabsPage } from './tabs.page';
 
 import { PerfilGuard } from '../guards/perfil.guard';
 
-// Definição das rotas filhas em português para suportar Angular Lazy Loading de cada módulo (Requisito 7)
+// Rotas filhas (Lazy Loading)
 const routes: Routes = [
   {
     path: '',

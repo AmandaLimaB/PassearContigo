@@ -11,38 +11,38 @@ import { PluginListenerHandle } from '@capacitor/core';
   standalone: false,
 })
 export class TabsPage implements OnInit, OnDestroy {
-  // Guardamos a referência do listener do acelerômetro para remover no OnDestroy
+  // Salva o listener do acelerômetro
   private accelListenerHandle: PluginListenerHandle | null = null;
   
-  // Throttle temporário para evitar disparar Toasts seguidos
+  // Evita spam de avisos
   private lastToastTime = 0;
 
   constructor(private toastController: ToastController) { }
 
   async ngOnInit() {
-    // Inicia a escuta ativa dos sensores de hardware do aparelho (Requisito 12)
+    // Liga o sensor de movimento
     await this.startAccelerometerListening();
   }
 
   async ngOnDestroy() {
-    // Limpa a escuta do hardware ao destruir o componente (Boas práticas de performance)
+    // Desliga o sensor ao sair
     if (this.accelListenerHandle) {
       await this.accelListenerHandle.remove();
     }
   }
 
-  // Monitora os dados do Acelerômetro programaticamente em tempo real (Requisito 12)
+  // Monitora o acelerômetro
   private async startAccelerometerListening() {
     try {
       this.accelListenerHandle = await Motion.addListener('accel', async (event) => {
         const x = event.accelerationIncludingGravity.x;
         const y = event.accelerationIncludingGravity.y;
         
-        // Se a inclinação lateral for forte, muda para Landscape
+        // Tela deitada
         if (Math.abs(x) > Math.abs(y) + 2.5) {
           await this.handleOrientationChange('landscape');
         } 
-        // Se a inclinação vertical for forte, volta para Portrait
+        // Tela em pé
         else if (Math.abs(y) > Math.abs(x) + 2.5) {
           await this.handleOrientationChange('portrait');
         }
@@ -74,12 +74,12 @@ export class TabsPage implements OnInit, OnDestroy {
     }
   }
 
-  // Auxiliar para a exibição de avisos de toast
+  // Mostra um aviso rápido
   private async presentToast(message: string) {
     const toast = await this.toastController.create({
       message: message,
       duration: 3000,
-      position: 'top', // Exibe no topo para não sobrepor o menu de abas inferior
+      position: 'top', // Exibe em cima
       color: 'primary',
       cssClass: 'accelerometer-toast'
     });

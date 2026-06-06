@@ -80,7 +80,7 @@ export class FinancasPage implements OnInit, OnDestroy {
         
         this.activeTrip = { nome: 'Histórico Completo' };
       } else {
-        // Modo mock — usa localStorage como fonte única
+        // Modo mock
         const allMockGastos = JSON.parse(localStorage.getItem('mock_gastos') || '[]');
         const mockViagens = JSON.parse(localStorage.getItem('mock_viagens') || '[]');
         const userViagens = mockViagens.filter((v: any) => v.pessoa_id?.toString() === pessoaId.toString());

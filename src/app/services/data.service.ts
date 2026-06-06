@@ -122,9 +122,7 @@ export class DataService {
     }
   }
 
-  // ===========================================================================
-  // VIAGENS
-  // ===========================================================================
+  // Viagens
 
   async getTrips(): Promise<any[]> {
     const dbInstance = (this.sqlite as any).db;
@@ -189,7 +187,7 @@ export class DataService {
     if (lowerName.includes('lisboa') || lowerName.includes('sintra') || lowerName.includes('coimbra') || lowerName.includes('fátima') || lowerName.includes('fatima') || lowerName.includes('óbidos') || lowerName.includes('obidos')) {
       return 'Centro de Portugal';
     }
-    // Default to Norte for Viana, Ponte de Lima, Braga, Porto, etc.
+    // Norte por padrão
     return 'Norte de Portugal';
   }
 
@@ -201,14 +199,14 @@ export class DataService {
 
     const dbInstance = (this.sqlite as any).db;
     if (dbInstance) {
-      // Tenta achar a viagem com o nome da região exata
+      // Acha região
       const resSpecific = await dbInstance.query({
         statement: 'SELECT id FROM viagens WHERE pessoa_id = ? AND local = ? ORDER BY id DESC LIMIT 1;',
         values: [pessoaId, targetTripName]
       });
       if (resSpecific.values && resSpecific.values.length > 0) return resSpecific.values[0].id;
       
-      // Se não tem pra essa região, cria!
+      // Cria região
       const dataInicio = new Date().toISOString().split('T')[0];
       await dbInstance.run({
         statement: 'INSERT INTO viagens (local, data_ida, data_volta, avaliacao, pessoa_id) VALUES (?, ?, ?, ?, ?);',
@@ -244,9 +242,7 @@ export class DataService {
     return newTrip.id;
   }
 
-  // ===========================================================================
-  // LOCAIS VISITADOS
-  // ===========================================================================
+  // Locais visitados
 
   async getVisitedLocations(): Promise<VisitedLocation[]> {
     const mockLocais = JSON.parse(localStorage.getItem('mock_locais') || '[]');
@@ -283,7 +279,7 @@ export class DataService {
       }
     }
 
-    // Sempre persiste no localStorage para que todas as páginas leiam
+    // Salva mock
     const locais = JSON.parse(localStorage.getItem('mock_locais') || '[]');
     const existingIdx = locais.findIndex((l: any) =>
       (l.nome === visited.name || l.name === visited.name) &&
@@ -315,9 +311,7 @@ export class DataService {
     localStorage.setItem('mock_locais', JSON.stringify(locais));
   }
 
-  // ===========================================================================
-  // DESPESAS
-  // ===========================================================================
+  // Despesas
 
   async getExpenses(): Promise<any[]> {
     return JSON.parse(localStorage.getItem('mock_gastos') || '[]');
@@ -337,7 +331,7 @@ export class DataService {
       );
     }
 
-    // Sempre persiste no localStorage
+    // Salva mock
     const gastos = JSON.parse(localStorage.getItem('mock_gastos') || '[]');
     gastos.push({
       id: Date.now(),
@@ -357,9 +351,7 @@ export class DataService {
     localStorage.setItem('mock_gastos', JSON.stringify(gastos));
   }
 
-  // ===========================================================================
-  // GUARD DE PERFIL
-  // ===========================================================================
+  // Guard perfil
 
   async hasVisitedPerfil(): Promise<boolean> {
     if (!this._storage) await this.init();

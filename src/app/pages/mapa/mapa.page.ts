@@ -71,7 +71,7 @@ export class MapaPage implements OnInit {
     // Simula a sincronização da partilha ativa buscando um registro temporário no storage
     this.dataService.getVisitedLocations().then(async () => {
       // Usaremos o storage para ler se o compartilhamento está ativo no perfil
-      // Para simular a partilha ativa que aparece no topo
+      // Simula partilha
       const storage = (this.dataService as any)._storage;
       if (storage) {
         const isSharing = await storage.get('sharing_active');
@@ -80,42 +80,42 @@ export class MapaPage implements OnInit {
     });
   }
 
-  // Carrega informações mescladas do JSON e do banco Ionic Storage (Requisito 9 e 10)
+  // Carrega info do banco e JSON
   async loadData() {
     this.mapLocations = await this.dataService.getMapLocations();
     this.visitedLocations = await this.dataService.getVisitedLocations();
   }
 
-  // Verifica se um determinado local possui um registro completo gravado (Requisito 11)
+  // Verifica registro local
   isLocationVisited(locationName: string): boolean {
     const found = this.visitedLocations.find(v => v.name === locationName);
     return !!found && found.hasRecord;
   }
 
-  // Retorna a URL da foto de um local visitado, se houver
+  // Retorna foto local
   getLocationPhoto(locationName: string): string {
     const found = this.visitedLocations.find(v => v.name === locationName);
     return found?.photoUrl || '';
   }
 
-  // Dispara o início do fluxo de confirmação ao clicar no FAB (Requisito 11)
+  // Inicia confirmação
   handleFABClick() {
     this.currentStep = 'confirm';
   }
 
-  // Confirmação de que o usuário chegou ao local correto
+  // Confirma chegada
   confirmLocation() {
     this.currentStep = 'feedback';
   }
 
-  // Submissão do feedback inicial (avaliação por estrelas e comentários)
+  // Salva feedback
   async submitFeedback() {
     if (!this.tempComment.trim()) {
       this.presentToast('Por favor, adicione um comentário sobre o local.');
       return;
     }
     
-    // Salva estado intermediário no banco usando o Service
+    // Salva rascunho no banco
     const visited: VisitedLocation = {
       id: Date.now().toString(),
       name: this.currentLocationName,
@@ -127,11 +127,11 @@ export class MapaPage implements OnInit {
     await this.dataService.saveVisitedLocation(visited);
     await this.loadData();
     
-    // Avança para a oferta de registros adicionais (Foto ou Custo)
+    // Avança para opções
     this.currentStep = 'addRecord';
   }
 
-  // Captura ou seleciona uma foto real da galeria do dispositivo
+  // Abre galeria
   async capturePhoto() {
     try {
       const image = await Camera.getPhoto({
@@ -149,7 +149,7 @@ export class MapaPage implements OnInit {
     }
   }
 
-  // Simula a captura de fotos do celular, permitindo escolher imagens ilustrativas
+  // Salva foto
   async savePhoto(presetPhoto: string) {
     const loading = await this.loadingController.create({
       message: 'A guardar fotografia...',
@@ -159,7 +159,7 @@ export class MapaPage implements OnInit {
 
     this.tempPhotoUrl = presetPhoto;
     
-    // Obtém o registro existente deste local para complementar com a foto
+    // Pega registro atual
     const visitedList = await this.dataService.getVisitedLocations();
     const existing = visitedList.find(loc => loc.name === this.currentLocationName);
     
@@ -180,7 +180,7 @@ export class MapaPage implements OnInit {
     this.currentStep = 'addRecord';
   }
 
-  // Registra despesas financeiras associadas a este local da viagem
+  // Salva despesa
   async saveCost() {
     if (!this.tempCostAmount || this.tempCostAmount <= 0) {
       this.presentToast('Por favor, informe um valor de custo válido.');
@@ -201,34 +201,34 @@ export class MapaPage implements OnInit {
       date: new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
     };
     
-    // Grava no Storage central através do Service (Requisito 9 e 15)
+    // Salva no banco
     await this.dataService.saveExpense(newExpense);
     await this.loadData();
     
     await loading.dismiss();
     await this.presentToast(`Despesa de €${this.tempCostAmount.toFixed(2)} guardada!`);
     
-    // Limpa campos e retorna ao menu de registros adicionais
+    // Limpa campos
     this.tempCostAmount = null;
     this.currentStep = 'addRecord';
   }
 
-  // Conclui todo o fluxo de visita do local e retorna ao estado normal do mapa
+  // Finaliza visita
   finishVisit() {
     this.presentToast('Visita registrada com absoluto sucesso!');
     this.currentStep = 'map';
-    // Limpa os dados temporários
+    // Limpa rascunho
     this.tempComment = '';
     this.tempRating = 5;
     this.tempPhotoUrl = '';
   }
 
-  // Cancela o fluxo em qualquer ponto e retorna para o mapa
+  // Cancela fluxo
   cancelFlow() {
     this.currentStep = 'map';
   }
 
-  // Auxiliar para exibição de mensagens rápidas no rodapé da tela
+  // Mostra toast
   async presentToast(message: string) {
     const toast = await this.toastController.create({
       message: message,
@@ -239,7 +239,7 @@ export class MapaPage implements OnInit {
     await toast.present();
   }
 
-  // Permite selecionar um local do mapa clicando diretamente nele
+  // Clica no local
   selectLocation(location: MapLocation) {
     this.currentLocationName = location.name;
     this.presentToast(`Local selecionado: ${location.name}. Clique no botão azul abaixo para registrar sua visita!`);
