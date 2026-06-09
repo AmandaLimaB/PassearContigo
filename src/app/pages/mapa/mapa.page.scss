@@ -537,3 +537,17 @@
     transform: translateY(0);
   }
 }
+
+.success-text {
+  color: var(--ion-color-success); 
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 8px; 
+
+  ion-icon {
+    font-size: 1.2rem;
+  }
+}

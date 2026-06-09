@@ -14,6 +14,9 @@ type FlowStep = 'map' | 'confirm' | 'feedback' | 'addRecord' | 'photo' | 'cost';
   standalone: false,
 })
 export class MapaPage implements OnInit {
+  hasAddedPhoto: boolean = false;
+  hasAddedCost: boolean = false;
+
   // Controle do passo ativo na UI do mapa
   currentStep: FlowStep = 'map';
   
@@ -177,6 +180,7 @@ export class MapaPage implements OnInit {
     
     await loading.dismiss();
     await this.presentToast('Fotografia guardada com sucesso!');
+    this.hasAddedPhoto = true;
     this.currentStep = 'addRecord';
   }
 
@@ -210,6 +214,7 @@ export class MapaPage implements OnInit {
     
     // Limpa campos
     this.tempCostAmount = null;
+    this.hasAddedCost = true;
     this.currentStep = 'addRecord';
   }
 
@@ -221,6 +226,9 @@ export class MapaPage implements OnInit {
     this.tempComment = '';
     this.tempRating = 5;
     this.tempPhotoUrl = '';
+    
+    this.hasAddedPhoto = false; 
+    this.hasAddedCost = false;
   }
 
   // Cancela fluxo

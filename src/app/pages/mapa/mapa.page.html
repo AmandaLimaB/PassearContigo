@@ -120,34 +120,42 @@
     </div>
   </div>
 
-  <!-- Passo 3: Adicionar Registro Complementar (Requisito 11) -->
-  <div class="bottom-sheet" *ngIf="currentStep === 'addRecord'">
-    <div class="sheet-header">
-      <div class="sheet-drag-handle"></div>
-      <h3>Enriquecer Registro</h3>
-      <p class="subtitle">Adicione mais detalhes à sua visita em {{ currentLocationName }}</p>
-    </div>
-    <div class="sheet-body ion-padding grid-options">
-      <!-- Botão para Capturar Foto -->
-      <button class="option-card" (click)="capturePhoto()">
-        <div class="option-icon-wrapper bg-blue">
-          <ion-icon name="camera" color="tertiary"></ion-icon>
-        </div>
-        <span>Adicionar Foto</span>
-      </button>
-
-      <!-- Botão para Adicionar Custo -->
-      <button class="option-card" (click)="currentStep = 'cost'">
-        <div class="option-icon-wrapper bg-green">
-          <ion-icon name="cash" color="success"></ion-icon>
-        </div>
-        <span>Registrar Custo</span>
-      </button>
-    </div>
-    <div class="sheet-footer">
-      <ion-button expand="block" color="primary" (click)="finishVisit()">Concluir Registro</ion-button>
-    </div>
+<!-- Passo 3: Adicionar Registro Complementar (Requisito 11) -->
+<div class="bottom-sheet" *ngIf="currentStep === 'addRecord'">
+  <div class="sheet-header">
+    <div class="sheet-drag-handle"></div>
+    <h3>Enriquecer Registro</h3>
+    <p class="subtitle">Adicione mais detalhes à sua visita em {{ currentLocationName }}</p>
   </div>
+  <div class="sheet-body ion-padding grid-options">
+    <!-- Botão para Capturar Foto -->
+    <button class="option-card" (click)="capturePhoto()">
+      <div class="option-icon-wrapper bg-blue">
+        <ion-icon name="camera" color="tertiary"></ion-icon>
+      </div>
+      <!-- Texto muda dinamicamente se a foto foi tirada -->
+      <span *ngIf="!hasAddedPhoto">Adicionar Foto</span>
+      <span *ngIf="hasAddedPhoto" class="success-text">
+        Foto Adicionada <ion-icon name="checkmark-circle" color="success"></ion-icon>
+      </span>
+    </button>
+
+    <!-- Botão para Adicionar Custo -->
+    <button class="option-card" (click)="currentStep = 'cost'">
+      <div class="option-icon-wrapper bg-green">
+        <ion-icon name="cash" color="success"></ion-icon>
+      </div>
+      <!-- Texto muda dinamicamente se o custo foi registrado -->
+      <span *ngIf="!hasAddedCost">Registrar Custo</span>
+      <span *ngIf="hasAddedCost" class="success-text">
+        Custo Registrado <ion-icon name="checkmark-circle" color="success"></ion-icon>
+      </span>
+    </button>
+  </div>
+  <div class="sheet-footer">
+    <ion-button expand="block" color="primary" (click)="finishVisit()">Concluir Registro</ion-button>
+  </div>
+</div>
 
   <!-- Passo 4: Capturar/Salvar Foto (Requisito 11) -->
   <div class="bottom-sheet large" *ngIf="currentStep === 'photo'">
