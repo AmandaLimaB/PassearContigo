@@ -14,6 +14,17 @@ type FlowStep = 'map' | 'confirm' | 'feedback' | 'addRecord' | 'photo' | 'cost';
   standalone: false,
 })
 export class MapaPage implements OnInit {
+
+  showShareSheet = false;
+  shareDetails = { contactsCount: 0, duration: '2 horas' };
+  selectedDuration = '2h';
+  contactsList = [
+    { id: '1', name: 'Ana Souza (Mãe)', selected: false },
+    { id: '2', name: 'Carlos Lima (Namorado)', selected: false },
+    { id: '3', name: 'Julia Martins (Irmã)', selected: false },
+    { id: '4', name: 'Pedro Alves (Amigo)', selected: false }
+  ];
+
   hasAddedPhoto: boolean = false;
   hasAddedCost: boolean = false;
 
@@ -81,6 +92,25 @@ export class MapaPage implements OnInit {
         this.sharingLocation = !!isSharing;
       }
     });
+  }
+
+  // NOVA FUNÇÃO: Ativa/Desativa a partilha diretamente pela barra de ferramentas
+  async toggleSharing() {
+    // Altera o estado atual
+    this.sharingLocation = !this.sharingLocation;
+    
+    // Grava no Storage para manter sincronizado com a página de Perfil e base de dados
+    const storage = (this.dataService as any)._storage;
+    if (storage) {
+      await storage.set('sharing_active', this.sharingLocation);
+    }
+    
+    // Fornece um feedback visual rápido para confirmar a ação
+    if (this.sharingLocation) {
+      this.presentToast('Partilha de localização em direto ATIVADA!');
+    } else {
+      this.presentToast('Partilha de localização DESATIVADA.');
+    }
   }
 
   // Carrega info do banco e JSON
@@ -252,4 +282,44 @@ export class MapaPage implements OnInit {
     this.currentLocationName = location.name;
     this.presentToast(`Local selecionado: ${location.name}. Clique no botão azul abaixo para registrar sua visita!`);
   }
+
+  activateShareMode() { 
+    this.showShareSheet = true; 
+  }
+
+  async confirmShare() {
+    const selectedCount = this.contactsList.filter(c => c.selected).length;
+    if (selectedCount === 0) {
+      this.presentToast('Por favor, selecione ao menos um contato de confiança.');
+      return;
+    }
+    const durationMap: Record<string, string> = { '1h': '1 hora', '2h': '2 horas', '5h': '5 horas', 'sempre': 'Até eu desligar' };
+    
+    this.sharingLocation = true; // Ativa o ícone no mapa
+    this.shareDetails = { contactsCount: selectedCount, duration: durationMap[this.selectedDuration] || '2 horas' };
+    this.showShareSheet = false; // Fecha o modal
+    
+    // Grava no Storage para manter sincronizado com a base de dados global
+    const storage = (this.dataService as any)._storage;
+    if (storage) {
+      await storage.set('sharing_active', true);
+      await storage.set('sharing_contacts_count', selectedCount.toString());
+      await storage.set('sharing_duration', this.shareDetails.duration);
+    }
+    
+    this.presentToast(`Partilha de localização ativa com ${selectedCount} contato(s)`);
+  }
+
+  async stopSharing() {
+    this.sharingLocation = false;
+    this.showShareSheet = false; // Fecha o modal
+    
+    const storage = (this.dataService as any)._storage;
+    if (storage) {
+      await storage.set('sharing_active', false);
+    }
+    
+    this.presentToast('Partilha de localização desativada.');
+  }
 }
+

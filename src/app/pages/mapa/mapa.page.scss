@@ -551,3 +551,60 @@
     font-size: 1.2rem;
   }
 }
+
+.custom-app-title {
+  font-family: 'Inter', 'Poppins', sans-serif !important;
+  font-size: 1.15rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.8px !important;
+}
+
+.custom-share-btn {
+  --padding-end: 14px;
+  --padding-start: 8px;
+
+  ion-icon {
+    font-size: 1.2rem;
+    margin-right: 6px;
+  }
+}
+
+.share-text-label {
+  font-family: 'Inter', 'Poppins', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.duration-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.duration-chip {
+  flex: 1 1 auto;
+  min-width: 70px;
+  padding: 10px 12px;
+  background-color: transparent;
+  color: var(--ion-color-medium-tint);
+  border: 1px solid var(--ion-color-medium);
+  border-radius: 24px;
+  font-family: 'Inter', 'Poppins', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.duration-chip.active {
+  background-color: var(--ion-color-primary);
+  color: #ffffff;
+  border-color: var(--ion-color-primary);
+  font-weight: 600;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  transform: scale(1.05);
+}

@@ -1,6 +1,18 @@
 <ion-header [translucent]="true" class="ion-no-border">
   <ion-toolbar color="primary">
-    <ion-title class="ion-text-center font-bold">Passear Contigo</ion-title>
+    <ion-title class="ion-text-center custom-app-title">Passear Contigo</ion-title>
+    
+    <ion-buttons slot="end">
+      <ion-button (click)="activateShareMode()" class="custom-share-btn">
+        <ion-icon slot="start" 
+                  [name]="sharingLocation ? 'radio' : 'radio-outline'" 
+                  [color]="sharingLocation ? 'success' : 'light'"></ion-icon>
+        
+        <span [style.color]="sharingLocation ? 'var(--ion-color-success)' : 'white'" class="share-text-label">
+          PARTILHAR
+        </span>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
@@ -231,5 +243,51 @@
       <ion-button expand="block" color="success" (click)="saveCost()">Gravar Despesa</ion-button>
     </div>
   </div>
+
+  <ion-modal [isOpen]="showShareSheet" (didDismiss)="showShareSheet = false" class="custom-modal">
+    <ng-template>
+      <ion-header class="ion-no-border">
+        <ion-toolbar color="primary">
+          <ion-title class="font-bold">Partilha Segura</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="showShareSheet = false">
+              <ion-icon name="close" slot="icon-only"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding bg-container">
+        <div class="form-container">
+          <p class="modal-info-txt ion-margin-bottom">Selecione quais contatos confiáveis podem receber a sua localização em tempo real:</p>
+
+          <ion-list class="contacts-checkbox-list ion-margin-bottom">
+            <ion-item *ngFor="let contact of contactsList" lines="full" class="contact-checkbox-item">
+              <ion-checkbox [(ngModel)]="contact.selected" labelPlacement="end" justify="start">
+                <span class="contact-name-label font-medium text-primary">{{ contact.name }}</span>
+              </ion-checkbox>
+            </ion-item>
+          </ion-list>
+
+          <div class="duration-section ion-margin-top ion-margin-bottom">
+            <p class="label-txt">Duração da Partilha</p>
+            <div class="duration-options">
+              <button class="duration-chip" [class.active]="selectedDuration === '1h'" (click)="selectedDuration = '1h'">1 hora</button>
+              <button class="duration-chip" [class.active]="selectedDuration === '2h'" (click)="selectedDuration = '2h'">2 horas</button>
+              <button class="duration-chip" [class.active]="selectedDuration === '5h'" (click)="selectedDuration = '5h'">5 horas</button>
+              <button class="duration-chip" [class.active]="selectedDuration === 'sempre'" (click)="selectedDuration = 'sempre'">Sempre</button>
+            </div>
+          </div>
+
+          <ion-button *ngIf="!sharingLocation" expand="block" color="tertiary" (click)="confirmShare()" class="save-btn font-bold">
+            Confirmar Partilha
+          </ion-button>
+          <ion-button *ngIf="sharingLocation" expand="block" color="danger" (click)="stopSharing()" class="save-btn font-bold">
+            Parar Partilha
+          </ion-button>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
 
 </ion-content>
