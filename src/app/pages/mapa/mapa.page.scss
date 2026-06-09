@@ -559,23 +559,9 @@
   letter-spacing: 0.8px !important;
 }
 
-.custom-share-btn {
-  --padding-end: 14px;
-  --padding-start: 8px;
-
-  ion-icon {
-    font-size: 1.2rem;
-    margin-right: 6px;
-  }
-}
-
-.share-text-label {
-  font-family: 'Inter', 'Poppins', sans-serif;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
+/* =========================================
+   ESTILIZAÇÃO DOS BOTÕES DE DURAÇÃO (CHIPS)
+   ========================================= */
 
 .duration-options {
   display: flex;
@@ -589,11 +575,12 @@
   flex: 1 1 auto;
   min-width: 70px;
   padding: 10px 12px;
-  background-color: transparent;
-  color: var(--ion-color-medium-tint);
-  border: 1px solid var(--ion-color-medium);
+  /* Fundo branco e texto cinza-azulado do tema */
+  background-color: var(--app-background); 
+  color: var(--app-muted-foreground); 
+  /* Borda usando a opacidade oficial do seu tema */
+  border: 1px solid var(--app-border); 
   border-radius: 24px;
-  font-family: 'Inter', 'Poppins', sans-serif;
   font-size: 0.85rem;
   font-weight: 500;
   text-align: center;
@@ -601,10 +588,73 @@
 }
 
 .duration-chip.active {
-  background-color: var(--ion-color-primary);
-  color: #ffffff;
-  border-color: var(--ion-color-primary);
+  /* Usa o azul de acento (Tertiary) para indicar destaque interativo */
+  background-color: var(--ion-color-tertiary); 
+  color: var(--ion-color-tertiary-contrast);
+  border-color: var(--ion-color-tertiary);
   font-weight: 600;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 10px rgba(25, 118, 210, 0.2);
   transform: scale(1.05);
+}
+
+
+
+.custom-modal {
+  --background: var(--app-muted) !important; 
+
+  ion-title {
+    color: var(--app-foreground) !important; 
+    font-weight: bold;
+  }
+
+  .modal-info-txt {
+    color: #ffffff; 
+    font-size: 0.95rem;
+    line-height: 1.4;
+  }
+
+  .contacts-checkbox-list {
+    background: transparent;
+    
+    .contact-checkbox-item {
+      --background: var(--app-background);
+      --border-color: transparent;
+      border: 1px solid var(--app-border);
+      border-radius: 12px;
+      margin-bottom: 8px;
+
+      ion-checkbox {
+        --size: 22px;
+        --checkbox-background-checked: var(--ion-color-tertiary); 
+        --border-color-checked: var(--ion-color-tertiary);
+        
+        &::part(container) {
+          border-radius: 6px;
+        }
+      }
+
+      .contact-name-label {
+        color: var(--app-foreground); 
+        font-weight: bold; 
+        font-size: 1rem;
+        margin-left: 10px;
+      }
+    }
+  }
+
+  .duration-section {
+    .label-txt {
+      color: #ffffff;
+      font-weight: bold;
+      font-size: 1.05rem;
+      margin-bottom: 12px;
+    }
+  }
+
+  .save-btn {
+    margin-top: 24px;
+    --border-radius: 8px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+  }
 }
