@@ -1,5 +1,6 @@
 .bg-container {
   --background: var(--app-muted);
+  --padding-bottom: 90px; /* Garante espaço extra no fundo para a barra inferior não cobrir o último item */
 }
 
 /* Cartão do cabeçalho da viagem com degradê vibrante */
@@ -52,6 +53,7 @@
     ion-icon {
       font-size: 1.3rem;
       margin-bottom: 4px;
+      color: #FFFFFF;
     }
 
     .box-num {

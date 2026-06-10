@@ -18,71 +18,29 @@
 
 <ion-content class="map-container">
   
-  <!-- Canvas do Mapa (Requisito 11) -->
   <div class="map-canvas">
     
-    <!-- Indicador de Status GPS Ativo (Aparência Premium) -->
-    <div class="gps-status-pill">
+    <div id="mapId" style="height: 100%; width: 100%; z-index: 1;"></div>
+
+    <div class="gps-status-pill" style="z-index: 10; position: absolute;">
       <span class="pulsing-dot green"></span>
       <span class="pill-text text-primary" style="color: var(--ion-color-primary);">GPS Ativo</span>
     </div>
 
-    <!-- Indicador de Partilha de Localização Ativa (Requisito 12) -->
-    <div *ngIf="sharingLocation" class="share-status-pill animate-pulse">
+    <div *ngIf="sharingLocation" class="share-status-pill animate-pulse" style="z-index: 10; position: absolute;">
       <ion-icon name="radio" class="share-icon"></ion-icon>
       <span class="pill-text">Partilha Ativa</span>
     </div>
 
-    <!-- Pin Central: Posição Atual do Usuário -->
-    <div class="user-pin-wrapper">
-      <div class="bounce-pin">
-        <ion-icon name="pin" color="danger" class="main-pin"></ion-icon>
-        <div class="pin-shadow"></div>
-      </div>
-      <div class="user-tooltip">
-        <span>Você está aqui</span>
-      </div>
-    </div>
-
-    <!-- Pins dos Locais Próximos cadastrados no JSON (Requisito 10) -->
-    <div *ngFor="let loc of mapLocations; let i = index" 
-         class="map-pin-wrapper"
-         [style.top]="(25 + i * 20) + '%'"
-         [style.left]="(15 + i * 28) + '%'"
-         (click)="selectLocation(loc)">
-      
-      <div class="pin-group">
-        <!-- Pin muda de cor para verde se o local já foi visitado e gravado no Storage (Requisito 9) -->
-        <ion-icon name="location" 
-                  [color]="isLocationVisited(loc.name) ? 'success' : 'primary'"
-                  class="nearby-pin"></ion-icon>
-        
-        <!-- Badge de check caso tenha registro -->
-        <div *ngIf="isLocationVisited(loc.name)" class="check-badge">
-          <ion-icon name="checkmark" color="light"></ion-icon>
-        </div>
-
-        <div class="pin-label">
-          <span>{{ loc.name }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Grade de Fundo Estilizada (Simulação de Grelha de Mapa) -->
-    <div class="map-grid-overlay"></div>
   </div>
 
-  <!-- Botão Flutuante (FAB) para Registro de Visita (Requisito 11) -->
-  <ion-fab vertical="bottom" horizontal="end" slot="fixed" *ngIf="currentStep === 'map'">
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed" *ngIf="currentStep === 'map'" style="z-index: 999;">
     <ion-fab-button (click)="handleFABClick()" color="tertiary" class="fab-pulse">
       <ion-icon name="add-circle"></ion-icon>
     </ion-fab-button>
   </ion-fab>
 
-  <!-- FLUXO DE BOTTOM SHEETS PERSONALIZADOS (Requisito 11 e 13) -->
-
-  <!-- Passo 1: Confirmação de Localização -->
-  <div class="bottom-sheet" *ngIf="currentStep === 'confirm'">
+  <div class="bottom-sheet" *ngIf="currentStep === 'confirm'" style="z-index: 1000;">
     <div class="sheet-header">
       <div class="sheet-drag-handle"></div>
       <h3>Confirmar Localização</h3>
@@ -101,8 +59,7 @@
     </div>
   </div>
 
-  <!-- Passo 2: Feedback (Requisito 3, 4, 11) -->
-  <div class="bottom-sheet large" *ngIf="currentStep === 'feedback'">
+  <div class="bottom-sheet large" *ngIf="currentStep === 'feedback'" style="z-index: 1000;">
     <div class="sheet-header">
       <div class="sheet-drag-handle"></div>
       <h3>Como foi sua visita?</h3>
@@ -110,7 +67,6 @@
     </div>
     <div class="sheet-body ion-padding">
       
-      <!-- Avaliação por Estrelas (Requisito 11) -->
       <div class="rating-stars-container">
         <ion-icon *ngFor="let star of [1,2,3,4,5]"
                   [name]="tempRating >= star ? 'star' : 'star-outline'"
@@ -118,7 +74,6 @@
                   class="rating-star"></ion-icon>
       </div>
 
-      <!-- Caixa de Comentário -->
       <ion-item lines="none" class="custom-textarea-item">
         <ion-textarea rows="3" 
                       placeholder="Compartilhe sua experiência neste local (ex: vista incrível, acessibilidade, etc.)..."
@@ -132,45 +87,39 @@
     </div>
   </div>
 
-<!-- Passo 3: Adicionar Registro Complementar (Requisito 11) -->
-<div class="bottom-sheet" *ngIf="currentStep === 'addRecord'">
-  <div class="sheet-header">
-    <div class="sheet-drag-handle"></div>
-    <h3>Enriquecer Registro</h3>
-    <p class="subtitle">Adicione mais detalhes à sua visita em {{ currentLocationName }}</p>
-  </div>
-  <div class="sheet-body ion-padding grid-options">
-    <!-- Botão para Capturar Foto -->
-    <button class="option-card" (click)="capturePhoto()">
-      <div class="option-icon-wrapper bg-blue">
-        <ion-icon name="camera" color="tertiary"></ion-icon>
-      </div>
-      <!-- Texto muda dinamicamente se a foto foi tirada -->
-      <span *ngIf="!hasAddedPhoto">Adicionar Foto</span>
-      <span *ngIf="hasAddedPhoto" class="success-text">
-        Foto Adicionada <ion-icon name="checkmark-circle" color="success"></ion-icon>
-      </span>
-    </button>
+  <div class="bottom-sheet" *ngIf="currentStep === 'addRecord'" style="z-index: 1000;">
+    <div class="sheet-header">
+      <div class="sheet-drag-handle"></div>
+      <h3>Enriquecer Registro</h3>
+      <p class="subtitle">Adicione mais detalhes à sua visita em {{ currentLocationName }}</p>
+    </div>
+    <div class="sheet-body ion-padding grid-options">
+      <button class="option-card" (click)="capturePhoto()">
+        <div class="option-icon-wrapper bg-blue">
+          <ion-icon name="camera" color="tertiary"></ion-icon>
+        </div>
+        <span *ngIf="!hasAddedPhoto">Adicionar Foto</span>
+        <span *ngIf="hasAddedPhoto" class="success-text">
+          Foto Adicionada <ion-icon name="checkmark-circle" color="success"></ion-icon>
+        </span>
+      </button>
 
-    <!-- Botão para Adicionar Custo -->
-    <button class="option-card" (click)="currentStep = 'cost'">
-      <div class="option-icon-wrapper bg-green">
-        <ion-icon name="cash" color="success"></ion-icon>
-      </div>
-      <!-- Texto muda dinamicamente se o custo foi registrado -->
-      <span *ngIf="!hasAddedCost">Registrar Custo</span>
-      <span *ngIf="hasAddedCost" class="success-text">
-        Custo Registrado <ion-icon name="checkmark-circle" color="success"></ion-icon>
-      </span>
-    </button>
+      <button class="option-card" (click)="currentStep = 'cost'">
+        <div class="option-icon-wrapper bg-green">
+          <ion-icon name="cash" color="success"></ion-icon>
+        </div>
+        <span *ngIf="!hasAddedCost">Registrar Custo</span>
+        <span *ngIf="hasAddedCost" class="success-text">
+          Custo Registrado <ion-icon name="checkmark-circle" color="success"></ion-icon>
+        </span>
+      </button>
+    </div>
+    <div class="sheet-footer">
+      <ion-button expand="block" color="primary" (click)="finishVisit()">Concluir Registro</ion-button>
+    </div>
   </div>
-  <div class="sheet-footer">
-    <ion-button expand="block" color="primary" (click)="finishVisit()">Concluir Registro</ion-button>
-  </div>
-</div>
 
-  <!-- Passo 4: Capturar/Salvar Foto (Requisito 11) -->
-  <div class="bottom-sheet large" *ngIf="currentStep === 'photo'">
+  <div class="bottom-sheet large" *ngIf="currentStep === 'photo'" style="z-index: 1000;">
     <div class="sheet-header">
       <div class="sheet-drag-handle"></div>
       <h3>Capturar Fotografia</h3>
@@ -178,7 +127,6 @@
     </div>
     <div class="sheet-body ion-padding">
       
-      <!-- Visualizador/Simulador de Câmera -->
       <div class="camera-simulator">
         <div *ngIf="!tempPhotoUrl" class="camera-placeholder">
           <ion-icon name="camera-reverse-outline" class="placeholder-icon"></ion-icon>
@@ -187,7 +135,6 @@
         <img *ngIf="tempPhotoUrl" [src]="tempPhotoUrl" class="captured-preview" />
       </div>
 
-      <!-- Presets de Fotos Locais para Simulação Realista (Visual Excellence) -->
       <div class="photo-presets">
         <button class="preset-btn" (click)="savePhoto('https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400')">
           <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=100" />
@@ -206,8 +153,7 @@
     </div>
   </div>
 
-  <!-- Passo 5: Registro de Custos (Requisito 9 e 11) -->
-  <div class="bottom-sheet large" *ngIf="currentStep === 'cost'">
+  <div class="bottom-sheet large" *ngIf="currentStep === 'cost'" style="z-index: 1000;">
     <div class="sheet-header">
       <div class="sheet-drag-handle"></div>
       <h3>Registrar Despesa</h3>
@@ -215,7 +161,6 @@
     </div>
     <div class="sheet-body ion-padding">
       
-      <!-- Entrada Numérica do Custo (Req. 13 Custom Inputs) -->
       <div class="cost-input-container">
         <span class="currency-prefix">€</span>
         <input type="number" 
@@ -225,7 +170,6 @@
                autofocus />
       </div>
 
-      <!-- Categoria da Despesa -->
       <ion-item lines="none" class="custom-select-item ion-margin-top">
         <ion-label style="color: #333;">Categoria</ion-label>
         <ion-select [(ngModel)]="tempCostCategory" interface="action-sheet" class="font-bold" style="color: #000;">
@@ -263,9 +207,17 @@
 
           <ion-list class="contacts-checkbox-list ion-margin-bottom">
             <ion-item *ngFor="let contact of contactsList" lines="full" class="contact-checkbox-item">
-              <ion-checkbox [(ngModel)]="contact.selected" labelPlacement="end" justify="start">
+              
+              <ion-avatar slot="start">
+                <img [src]="contact.img" />
+              </ion-avatar>
+
+              <ion-label>
                 <span class="contact-name-label font-medium text-primary">{{ contact.name }}</span>
-              </ion-checkbox>
+              </ion-label>
+
+              <ion-checkbox slot="end" [(ngModel)]="contact.selected"></ion-checkbox>
+              
             </ion-item>
           </ion-list>
 

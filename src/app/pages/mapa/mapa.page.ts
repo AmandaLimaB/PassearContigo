@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastController, LoadingController } from '@ionic/angular';
 import { DataService, MapLocation, VisitedLocation, Expense } from '../../services/data.service';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import * as L from 'leaflet'; // IMPORTAÇÃO DO LEAFLET
 
 // Definição dos possíveis passos do fluxo de registro de visita
 type FlowStep = 'map' | 'confirm' | 'feedback' | 'addRecord' | 'photo' | 'cost';
@@ -13,16 +14,19 @@ type FlowStep = 'map' | 'confirm' | 'feedback' | 'addRecord' | 'photo' | 'cost';
   styleUrls: ['./mapa.page.scss'],
   standalone: false,
 })
-export class MapaPage implements OnInit {
+export class MapaPage implements OnInit, OnDestroy {
+
+  // Variável que guarda a instância do mapa real
+  map!: L.Map;
 
   showShareSheet = false;
   shareDetails = { contactsCount: 0, duration: '2 horas' };
   selectedDuration = '2h';
   contactsList = [
-    { id: '1', name: 'Ana Souza (Mãe)', selected: false },
-    { id: '2', name: 'Carlos Lima (Namorado)', selected: false },
-    { id: '3', name: 'Julia Martins (Irmã)', selected: false },
-    { id: '4', name: 'Pedro Alves (Amigo)', selected: false }
+    { id: '1', name: 'Ana Souza (Mãe)', selected: false, img: 'assets/icon/ana.jpg'},
+    { id: '2', name: 'Carlos Lima (Namorado)', selected: false, img: 'assets/icon/joao.jpg'},
+    { id: '3', name: 'Julia Martins (Irmã)', selected: false, img: 'assets/icon/lau.jpg' },
+    { id: '4', name: 'Pedro Alves (Amigo)', selected: false, img: 'assets/icon/ze.jpg'}
   ];
 
   hasAddedPhoto: boolean = false;
@@ -53,7 +57,8 @@ export class MapaPage implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private toastController: ToastController,
-    private loadingController: LoadingController
+    private loadingController: LoadingController,
+    private zone: NgZone // IMPORTANTE: Para que o Angular atualize a UI após um clique num Pin do Leaflet
   ) { }
 
   async ngOnInit() {
@@ -84,8 +89,6 @@ export class MapaPage implements OnInit {
     await this.loadData();
     // Simula a sincronização da partilha ativa buscando um registro temporário no storage
     this.dataService.getVisitedLocations().then(async () => {
-      // Usaremos o storage para ler se o compartilhamento está ativo no perfil
-      // Simula partilha
       const storage = (this.dataService as any)._storage;
       if (storage) {
         const isSharing = await storage.get('sharing_active');
@@ -94,18 +97,106 @@ export class MapaPage implements OnInit {
     });
   }
 
+  // EVENTO CRUCIAL PARA O MAPA: Dispara quando a tela entra efetivamente no ecrã e a div já existe
+  ionViewDidEnter() {
+    this.initMap();
+  }
+
+  // MÉTODOS DO LEAFLET ==========================================
+
+  initMap() {
+    // Destrói a instância anterior caso o utilizador navegue e volte à página
+    if (this.map) {
+      this.map.remove();
+    }
+
+    // Coordenadas centrais simuladas (Ex: Porto, Portugal)
+    const userLat = 41.6932;
+    const userLng = -8.8329;
+
+    // 1. Cria o mapa
+    this.map = L.map('mapId', {
+      zoomControl: false // Remove os botões de +/- para manter a estética limpa da app
+    }).setView([userLat, userLng], 14);
+
+    // 2. Adiciona os blocos visuais do OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(this.map);
+
+    // 3. Desenha o Pin Principal (Utilizador - Cor Vermelha)
+    const userIcon = L.divIcon({
+      className: 'custom-user-pin',
+      html: `<div style="font-size: 32px; filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.4));">📍</div>`,
+      iconSize: [32, 32],
+      iconAnchor: [16, 32] // Ancora o ícone na ponta inferior
+    });
+    L.marker([userLat, userLng], { icon: userIcon }).addTo(this.map);
+
+    // 4. Desenha os pins dos locais registados no JSON
+    this.renderLocationsPins();
+  }
+
+  renderLocationsPins() {
+    // Coordenadas base para espalhar locais se não houver lat/lng no JSON
+    const baseLat = 41.1579;
+    const baseLng = -8.6291;
+
+    this.mapLocations.forEach((loc, index) => {
+      // Tenta pegar a lat/lng do JSON. Se não existir, gera uma posição falsa próxima para testes
+      const lat = (loc as any).lat || (baseLat + (index * 0.005) - 0.01);
+      const lng = (loc as any).lng || (baseLng + (index * 0.005) - 0.01);
+
+      const isVisited = this.isLocationVisited(loc.name);
+      
+      // Cores em HEX para manter consistência com o tema do Ionic (success = verde, primary = azul)
+      const pinColor = isVisited ? '#00ff66' : '#083e9a'; 
+      const pinSymbol = isVisited ? '✓' : '📌';
+
+      const customIcon = L.divIcon({
+        className: 'custom-nearby-pin',
+        html: `
+          <div style="background-color: white; border-radius: 50%; width: 30px; height: 30px; border: 3px solid ${pinColor}; box-shadow: 0 3px 6px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; transform: translateY(-5px);">
+            <span style="color: ${pinColor}; font-size: 14px; font-weight: 900;">${pinSymbol}</span>
+          </div>
+          <div style="text-align: center; margin-top: 2px; font-weight: bold; color: #333; text-shadow: 1px 1px 2px white; font-size: 12px; white-space: nowrap; transform: translateX(-25%);">
+            ${loc.name}
+          </div>
+        `,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15]
+      });
+
+      const marker = L.marker([lat, lng], { icon: customIcon }).addTo(this.map);
+      
+      // Vincula o clique no pin
+      marker.on('click', () => {
+        // Envolve em NgZone para o Angular "ouvir" o evento e abrir a modal imediatamente
+        this.zone.run(() => {
+          this.selectLocation(loc);
+        });
+      });
+    });
+  }
+
+  // Prevenção de quebras de memória
+  ngOnDestroy() {
+    if (this.map) {
+      this.map.remove();
+    }
+  }
+
+  // FIM DOS MÉTODOS DO LEAFLET ==================================
+
   // NOVA FUNÇÃO: Ativa/Desativa a partilha diretamente pela barra de ferramentas
   async toggleSharing() {
-    // Altera o estado atual
     this.sharingLocation = !this.sharingLocation;
     
-    // Grava no Storage para manter sincronizado com a página de Perfil e base de dados
     const storage = (this.dataService as any)._storage;
     if (storage) {
       await storage.set('sharing_active', this.sharingLocation);
     }
     
-    // Fornece um feedback visual rápido para confirmar a ação
     if (this.sharingLocation) {
       this.presentToast('Partilha de localização em direto ATIVADA!');
     } else {
@@ -113,42 +204,40 @@ export class MapaPage implements OnInit {
     }
   }
 
-  // Carrega info do banco e JSON
   async loadData() {
     this.mapLocations = await this.dataService.getMapLocations();
     this.visitedLocations = await this.dataService.getVisitedLocations();
+    
+    // Atualiza os pins caso o mapa já esteja carregado (ex: o utilizador gravou uma visita e a cor deve mudar para verde)
+    if (this.map) {
+      this.initMap();
+    }
   }
 
-  // Verifica registro local
   isLocationVisited(locationName: string): boolean {
     const found = this.visitedLocations.find(v => v.name === locationName);
     return !!found && found.hasRecord;
   }
 
-  // Retorna foto local
   getLocationPhoto(locationName: string): string {
     const found = this.visitedLocations.find(v => v.name === locationName);
     return found?.photoUrl || '';
   }
 
-  // Inicia confirmação
   handleFABClick() {
     this.currentStep = 'confirm';
   }
 
-  // Confirma chegada
   confirmLocation() {
     this.currentStep = 'feedback';
   }
 
-  // Salva feedback
   async submitFeedback() {
     if (!this.tempComment.trim()) {
       this.presentToast('Por favor, adicione um comentário sobre o local.');
       return;
     }
     
-    // Salva rascunho no banco
     const visited: VisitedLocation = {
       id: Date.now().toString(),
       name: this.currentLocationName,
@@ -160,11 +249,9 @@ export class MapaPage implements OnInit {
     await this.dataService.saveVisitedLocation(visited);
     await this.loadData();
     
-    // Avança para opções
     this.currentStep = 'addRecord';
   }
 
-  // Abre galeria
   async capturePhoto() {
     try {
       const image = await Camera.getPhoto({
@@ -182,7 +269,6 @@ export class MapaPage implements OnInit {
     }
   }
 
-  // Salva foto
   async savePhoto(presetPhoto: string) {
     const loading = await this.loadingController.create({
       message: 'A guardar fotografia...',
@@ -192,7 +278,6 @@ export class MapaPage implements OnInit {
 
     this.tempPhotoUrl = presetPhoto;
     
-    // Pega registro atual
     const visitedList = await this.dataService.getVisitedLocations();
     const existing = visitedList.find(loc => loc.name === this.currentLocationName);
     
@@ -214,7 +299,6 @@ export class MapaPage implements OnInit {
     this.currentStep = 'addRecord';
   }
 
-  // Salva despesa
   async saveCost() {
     if (!this.tempCostAmount || this.tempCostAmount <= 0) {
       this.presentToast('Por favor, informe um valor de custo válido.');
@@ -235,24 +319,20 @@ export class MapaPage implements OnInit {
       date: new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
     };
     
-    // Salva no banco
     await this.dataService.saveExpense(newExpense);
     await this.loadData();
     
     await loading.dismiss();
     await this.presentToast(`Despesa de €${this.tempCostAmount.toFixed(2)} guardada!`);
     
-    // Limpa campos
     this.tempCostAmount = null;
     this.hasAddedCost = true;
     this.currentStep = 'addRecord';
   }
 
-  // Finaliza visita
   finishVisit() {
     this.presentToast('Visita registrada com absoluto sucesso!');
     this.currentStep = 'map';
-    // Limpa rascunho
     this.tempComment = '';
     this.tempRating = 5;
     this.tempPhotoUrl = '';
@@ -261,12 +341,10 @@ export class MapaPage implements OnInit {
     this.hasAddedCost = false;
   }
 
-  // Cancela fluxo
   cancelFlow() {
     this.currentStep = 'map';
   }
 
-  // Mostra toast
   async presentToast(message: string) {
     const toast = await this.toastController.create({
       message: message,
@@ -277,7 +355,6 @@ export class MapaPage implements OnInit {
     await toast.present();
   }
 
-  // Clica no local
   selectLocation(location: MapLocation) {
     this.currentLocationName = location.name;
     this.presentToast(`Local selecionado: ${location.name}. Clique no botão azul abaixo para registrar sua visita!`);
@@ -295,11 +372,10 @@ export class MapaPage implements OnInit {
     }
     const durationMap: Record<string, string> = { '1h': '1 hora', '2h': '2 horas', '5h': '5 horas', 'sempre': 'Até eu desligar' };
     
-    this.sharingLocation = true; // Ativa o ícone no mapa
+    this.sharingLocation = true; 
     this.shareDetails = { contactsCount: selectedCount, duration: durationMap[this.selectedDuration] || '2 horas' };
-    this.showShareSheet = false; // Fecha o modal
+    this.showShareSheet = false; 
     
-    // Grava no Storage para manter sincronizado com a base de dados global
     const storage = (this.dataService as any)._storage;
     if (storage) {
       await storage.set('sharing_active', true);
@@ -312,7 +388,7 @@ export class MapaPage implements OnInit {
 
   async stopSharing() {
     this.sharingLocation = false;
-    this.showShareSheet = false; // Fecha o modal
+    this.showShareSheet = false; 
     
     const storage = (this.dataService as any)._storage;
     if (storage) {
@@ -322,4 +398,3 @@ export class MapaPage implements OnInit {
     this.presentToast('Partilha de localização desativada.');
   }
 }
-

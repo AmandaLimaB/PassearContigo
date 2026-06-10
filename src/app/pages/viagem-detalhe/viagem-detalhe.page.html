@@ -28,17 +28,17 @@
 
       <div class="info-grid ion-margin-top">
         <div class="info-box">
-          <ion-icon name="location-outline" color="tertiary"></ion-icon>
+          <ion-icon name="location-outline"></ion-icon>
           <span class="box-num">{{ trip.locais || 0 }}</span>
           <span class="box-lbl">Locais</span>
         </div>
         <div class="info-box">
-          <ion-icon name="cash-outline" color="tertiary"></ion-icon>
+          <ion-icon name="cash-outline"></ion-icon>
           <span class="box-num">{{ (trip.total_gasto || 0) | currency:'EUR':'symbol':'1.2-2':'pt-BR' }}</span>
           <span class="box-lbl">Gastos</span>
         </div>
         <div class="info-box">
-          <ion-icon name="star-outline" color="tertiary"></ion-icon>
+          <ion-icon name="star-outline"></ion-icon>
           <div class="stars-row">
             <ion-icon *ngFor="let starIdx of getStarsArray(trip.avaliacao); let i = index" 
                       name="star" 
