@@ -4,7 +4,7 @@ import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
 const routes: Routes = [
   {
     path: '',
-    redirectTo: 'cadastro', // <-- MUDADO AQUI: Agora a app abre direto no Login/Cadastro
+    redirectTo: 'cadastro', 
     pathMatch: 'full'
   },
   {
